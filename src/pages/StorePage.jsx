@@ -1,0 +1,113 @@
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Store, Loader2, ShoppingCart } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { storeAPI } from '../api';
+import useCartStore from '../store/cartStore';
+import useAuthStore from '../store/authStore';
+import { formatCurrency } from '../lib/utils';
+import { toast } from '../components/ui/toast';
+
+export default function StorePage() {
+  const { sellerId } = useParams();
+  const navigate = useNavigate();
+  const [store, setStore] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [addingId, setAddingId] = useState(null);
+  const { addItem } = useCartStore();
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    storeAPI.get(sellerId)
+      .then(({ data }) => {
+        setStore(data.data.seller);
+        setProducts(data.data.products);
+      })
+      .catch(() => { toast({ title: 'Store not found', variant: 'destructive' }); navigate('/stores'); })
+      .finally(() => setIsLoading(false));
+  }, [sellerId]);
+
+  const handleAddToCart = async (productId, name) => {
+    if (!user) { toast({ title: 'Please log in to add items to cart', variant: 'destructive' }); return; }
+    if (user.role !== 'BUYER') { toast({ title: 'Only buyers can add to cart', variant: 'destructive' }); return; }
+    setAddingId(productId);
+    try {
+      await addItem(productId, 1);
+      toast({ title: `${name} added to cart!` });
+    } catch (err) {
+      toast({ title: 'Error', description: err.response?.data?.message || 'Failed to add item', variant: 'destructive' });
+    } finally {
+      setAddingId(null);
+    }
+  };
+
+  if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (!store) return null;
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <Link to="/stores" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+        <ArrowLeft className="h-4 w-4" /> All Stores
+      </Link>
+
+      {/* Store header */}
+      <div className="flex items-center gap-5 mb-8 p-6 rounded-xl border bg-white shadow-sm">
+        {store.profileImage ? (
+          <img src={store.profileImage} alt={store.storeName} className="h-20 w-20 rounded-full object-cover border-2 border-rosewood-200 flex-shrink-0" />
+        ) : (
+          <div className="h-20 w-20 rounded-full bg-rosewood-100 flex items-center justify-center flex-shrink-0">
+            <Store className="h-10 w-10 text-rosewood-600" />
+          </div>
+        )}
+        <div>
+          <h1 className="text-2xl font-bold">{store.storeName}</h1>
+          <p className="text-muted-foreground text-sm">by {store.fullName}</p>
+          <p className="text-xs text-muted-foreground mt-1">Member since {new Date(store.createdAt).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</p>
+        </div>
+      </div>
+
+      {/* Products */}
+      <h2 className="text-lg font-semibold mb-4">Products ({products.length})</h2>
+      {products.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">No products available yet.</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {products.map((product) => {
+            const image = product.images?.[0]?.url;
+            return (
+              <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group">
+                <Link to={`/products/${product.slug}`}>
+                  <div className="aspect-square bg-muted overflow-hidden">
+                    {image ? (
+                      <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                    )}
+                  </div>
+                </Link>
+                <CardContent className="p-3">
+                  <Link to={`/products/${product.slug}`}>
+                    <p className="text-sm font-medium line-clamp-2 hover:text-rosewood-600">{product.name}</p>
+                  </Link>
+                  <p className="text-rosewood-600 font-bold mt-1">{formatCurrency(product.price)}</p>
+                  {user?.role === 'BUYER' && (
+                    <Button
+                      size="sm"
+                      className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
+                      onClick={() => handleAddToCart(product.id, product.name)}
+                      disabled={addingId === product.id}
+                    >
+                      {addingId === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
