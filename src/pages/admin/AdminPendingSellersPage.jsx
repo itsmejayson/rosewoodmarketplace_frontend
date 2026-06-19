@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, Store, Phone, Mail, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Store, Phone, Mail, RefreshCw, FileText, ExternalLink } from 'lucide-react';
 import { useSocket } from '../../hooks/useSocket';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Button } from '../../components/ui/button';
@@ -123,6 +123,20 @@ export default function AdminPendingSellersPage() {
                       <p className="text-xs text-muted-foreground mt-1">
                         Applied {formatDate(seller.createdAt)}
                       </p>
+                      {seller.proofDocument ? (
+                        <a
+                          href={seller.proofDocument}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 mt-2 text-xs text-rosewood-600 hover:underline font-medium"
+                        >
+                          <FileText className="h-3 w-3" />
+                          View Proof of Residency
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : (
+                        <p className="text-xs text-amber-600 mt-2 font-medium">No document submitted</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">

@@ -56,48 +56,93 @@ export default function StoresPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-lg border bg-card p-5 flex items-center gap-4">
-              <Skeleton className="h-14 w-14 rounded-full flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-                <Skeleton className="h-3 w-1/4" />
+        <>
+          {/* Mobile skeleton */}
+          <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-64 rounded-lg border bg-card p-5 flex items-center gap-4">
+                <Skeleton className="h-14 w-14 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          {/* Desktop skeleton */}
+          <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-lg border bg-card p-5 flex items-center gap-4">
+                <Skeleton className="h-14 w-14 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       ) : stores.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
           <Store className="h-12 w-12 mx-auto mb-3 opacity-30" />
           <p>No stores found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {stores.map((store) => (
-            <Link key={store.id} to={`/store/${store.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                <CardContent className="p-5 flex items-center gap-4">
-                  {store.profileImage ? (
-                    <img src={store.profileImage} alt={store.storeName} className="h-14 w-14 rounded-full object-cover flex-shrink-0 border" />
-                  ) : (
-                    <div className="h-14 w-14 rounded-full bg-rosewood-100 flex items-center justify-center flex-shrink-0">
-                      <Store className="h-7 w-7 text-rosewood-600" />
+        <>
+          {/* Mobile: horizontal swipe carousel */}
+          <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory -mx-4 px-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {stores.map((store) => (
+              <Link key={store.id} to={`/store/${store.id}`} className="snap-start flex-shrink-0 w-64">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <CardContent className="p-5 flex items-center gap-4">
+                    {store.profileImage ? (
+                      <img src={store.profileImage} alt={store.storeName} className="h-14 w-14 rounded-full object-cover flex-shrink-0 border" />
+                    ) : (
+                      <div className="h-14 w-14 rounded-full bg-rosewood-100 flex items-center justify-center flex-shrink-0">
+                        <Store className="h-7 w-7 text-rosewood-600" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{store.storeName}</p>
+                      <p className="text-sm text-muted-foreground truncate">{store.fullName}</p>
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <Package className="h-3 w-3" /> {store._count?.products ?? 0} products
+                      </p>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">{store.storeName}</p>
-                    <p className="text-sm text-muted-foreground truncate">{store.fullName}</p>
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <Package className="h-3 w-3" /> {store._count?.products ?? 0} products
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop: grid */}
+          <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 gap-4">
+            {stores.map((store) => (
+              <Link key={store.id} to={`/store/${store.id}`}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                  <CardContent className="p-5 flex items-center gap-4">
+                    {store.profileImage ? (
+                      <img src={store.profileImage} alt={store.storeName} className="h-14 w-14 rounded-full object-cover flex-shrink-0 border" />
+                    ) : (
+                      <div className="h-14 w-14 rounded-full bg-rosewood-100 flex items-center justify-center flex-shrink-0">
+                        <Store className="h-7 w-7 text-rosewood-600" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{store.storeName}</p>
+                      <p className="text-sm text-muted-foreground truncate">{store.fullName}</p>
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <Package className="h-3 w-3" /> {store._count?.products ?? 0} products
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
 
       {meta.pages > 1 && (

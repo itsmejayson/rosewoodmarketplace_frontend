@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShoppingCart, Loader2, ArrowLeft, Package, Thermometer, Calendar, Tag, Heart, Star } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -43,6 +43,19 @@ export default function ProductDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  const carouselRef = useRef(null);
+
+  const handleCarouselScroll = useCallback(() => {
+    if (!carouselRef.current) return;
+    const idx = Math.round(carouselRef.current.scrollLeft / carouselRef.current.offsetWidth);
+    setSelectedImage(idx);
+  }, []);
+
+  const scrollToImage = (idx) => {
+    setSelectedImage(idx);
+    carouselRef.current?.scrollTo({ left: idx * carouselRef.current.offsetWidth, behavior: 'smooth' });
+  };
 
   const { addItem } = useCartStore();
   const { user } = useAuthStore();
@@ -196,27 +209,62 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Images */}
           <div>
-            <div className="aspect-square rounded-lg overflow-hidden border bg-muted mb-3">
-              <img
-                src={product.images?.[selectedImage]?.url || '/placeholder-product.jpg'}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                onError={(e) => { e.target.src = '/placeholder-product.jpg'; }}
-              />
-            </div>
-            {product.images?.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((img, idx) => (
-                  <button
-                    key={img.id}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden ${selectedImage === idx ? 'border-rosewood-500' : 'border-transparent'}`}
-                  >
-                    <img src={img.url} alt="" className="w-full h-full object-cover" />
-                  </button>
+            {/* Mobile: swipe carousel */}
+            <div className="md:hidden">
+              <div
+                ref={carouselRef}
+                onScroll={handleCarouselScroll}
+                className="flex overflow-x-auto snap-x snap-mandatory rounded-lg border bg-muted mb-2 scrollbar-hide"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {(product.images?.length ? product.images : [null]).map((img, idx) => (
+                  <div key={img?.id ?? idx} className="snap-center flex-shrink-0 w-full aspect-square">
+                    <img
+                      src={img?.url || '/placeholder-product.jpg'}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = '/placeholder-product.jpg'; }}
+                    />
+                  </div>
                 ))}
               </div>
-            )}
+              {product.images?.length > 1 && (
+                <div className="flex justify-center gap-1.5 mb-3">
+                  {product.images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => scrollToImage(idx)}
+                      className={`rounded-full transition-all ${selectedImage === idx ? 'w-4 h-2 bg-rosewood-600' : 'w-2 h-2 bg-gray-300'}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop: main image + thumbnails */}
+            <div className="hidden md:block">
+              <div className="aspect-square rounded-lg overflow-hidden border bg-muted mb-3">
+                <img
+                  src={product.images?.[selectedImage]?.url || '/placeholder-product.jpg'}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.src = '/placeholder-product.jpg'; }}
+                />
+              </div>
+              {product.images?.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto">
+                  {product.images.map((img, idx) => (
+                    <button
+                      key={img.id}
+                      onClick={() => setSelectedImage(idx)}
+                      className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden ${selectedImage === idx ? 'border-rosewood-500' : 'border-transparent'}`}
+                    >
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Details */}

@@ -258,107 +258,184 @@ export default function MarketplacePage() {
         {meta.total} product{meta.total !== 1 ? 's' : ''} found
       </p>
 
-      {/* Product Grid */}
+      {/* Product Grid / Carousel */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="rounded-lg overflow-hidden border bg-card">
-              <Skeleton className="h-48 w-full rounded-none" />
-              <div className="p-4 space-y-2">
-                <Skeleton className="h-3 w-1/3" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-8 w-full mt-3" />
+        <>
+          {/* Mobile skeleton carousel */}
+          <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-48 rounded-lg overflow-hidden border bg-card">
+                <Skeleton className="h-44 w-full rounded-none" />
+                <div className="p-3 space-y-2">
+                  <Skeleton className="h-3 w-1/3" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-7 w-full mt-2" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          {/* Desktop skeleton grid */}
+          <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-lg overflow-hidden border bg-card">
+                <Skeleton className="h-48 w-full rounded-none" />
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-3 w-1/3" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-8 w-full mt-3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       ) : products.length === 0 ? (
         <div className="text-center py-20">
           <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <p className="text-muted-foreground">No products found. Try adjusting your filters.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {products.map((product) => (
-            <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
-              {/* Image */}
-              <div className="relative overflow-hidden bg-muted h-48 flex-shrink-0">
-                <img
-                  src={product.images?.[0]?.url || '/placeholder-product.jpg'}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onError={(e) => { e.target.src = '/placeholder-product.jpg'; }}
-                />
-                <Badge
-                  className="absolute top-2 left-2 text-xs"
-                  variant={product.productType === 'FOOD' ? 'success' : 'secondary'}
-                >
-                  {product.productType}
-                </Badge>
-                {user?.role === 'BUYER' && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(product.id); }}
-                    className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center z-10"
-                    title={favoriteIds.has(product.id) ? 'Remove from favorites' : 'Add to favorites'}
-                  >
-                    <Heart className={`h-4 w-4 ${favoriteIds.has(product.id) ? 'fill-rosewood-500 text-rosewood-500' : 'text-muted-foreground'}`} />
-                  </button>
-                )}
-                {product.stockQty === 0 && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">Out of Stock</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Content — flex-col so button is pushed to bottom */}
-              <CardContent className="p-4 flex flex-col flex-1">
-                {/* Top info */}
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-xs text-muted-foreground">{product.category?.name}</p>
-                    {product.seller?.storeName && (
-                      <Link
-                        to={`/store/${product.seller.id}`}
-                        className="text-xs text-rosewood-600 hover:underline font-medium truncate max-w-[100px]"
-                        onClick={(e) => e.stopPropagation()}
+        <>
+          {/* Mobile: horizontal swipe carousel */}
+          <div
+            className="sm:hidden flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory -mx-4 px-4"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {products.map((product) => (
+              <div key={product.id} className="snap-start flex-shrink-0 w-48">
+                <Card className="overflow-hidden hover:shadow-md transition-shadow group flex flex-col h-full">
+                  <div className="relative overflow-hidden bg-muted h-44 flex-shrink-0">
+                    <img
+                      src={product.images?.[0]?.url || '/placeholder-product.jpg'}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => { e.target.src = '/placeholder-product.jpg'; }}
+                    />
+                    <Badge
+                      className="absolute top-2 left-2 text-xs"
+                      variant={product.productType === 'FOOD' ? 'success' : 'secondary'}
+                    >
+                      {product.productType}
+                    </Badge>
+                    {user?.role === 'BUYER' && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(product.id); }}
+                        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center z-10"
                       >
-                        {product.seller.storeName}
-                      </Link>
+                        <Heart className={`h-3.5 w-3.5 ${favoriteIds.has(product.id) ? 'fill-rosewood-500 text-rosewood-500' : 'text-muted-foreground'}`} />
+                      </button>
+                    )}
+                    {product.stockQty === 0 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white font-semibold text-xs">Out of Stock</span>
+                      </div>
                     )}
                   </div>
-                  <Link to={`/products/${product.slug}`} className="font-semibold text-sm hover:text-rosewood-600 line-clamp-2 block mt-0.5">
-                    {product.name}
-                  </Link>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
-                </div>
+                  <CardContent className="p-3 flex flex-col flex-1">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">{product.category?.name}</p>
+                      <Link to={`/products/${product.slug}`} className="font-semibold text-sm hover:text-rosewood-600 line-clamp-2 block mt-0.5">
+                        {product.name}
+                      </Link>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="font-bold text-rosewood-600 text-sm">{formatCurrency(product.price)}</span>
+                      <span className="text-xs text-muted-foreground">{product.stockQty} left</span>
+                    </div>
+                    {user?.role === 'BUYER' && (
+                      <Button
+                        size="sm"
+                        className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
+                        disabled={product.stockQty === 0 || fetchingProduct === product.id}
+                        onClick={() => handleAddToCartClick(product)}
+                      >
+                        {fetchingProduct === product.id
+                          ? <span className="h-3.5 w-3.5 animate-spin border-2 border-white border-t-transparent rounded-full inline-block" />
+                          : <><ShoppingCart className="h-3.5 w-3.5 mr-1" />{product.stockQty === 0 ? 'Out of Stock' : 'Add to Cart'}</>
+                        }
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
 
-                {/* Price + stock — always at the same vertical position */}
-                <div className="flex items-center justify-between mt-3">
-                  <span className="font-bold text-rosewood-600">{formatCurrency(product.price)}</span>
-                  <span className="text-xs text-muted-foreground">{product.stockQty} left</span>
-                </div>
-
-                {/* Button — always pinned at bottom */}
-                {user?.role === 'BUYER' && (
-                  <Button
-                    size="sm"
-                    className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700"
-                    disabled={product.stockQty === 0 || fetchingProduct === product.id}
-                    onClick={() => handleAddToCartClick(product)}
+          {/* Desktop: grid */}
+          <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {products.map((product) => (
+              <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
+                <div className="relative overflow-hidden bg-muted h-48 flex-shrink-0">
+                  <img
+                    src={product.images?.[0]?.url || '/placeholder-product.jpg'}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => { e.target.src = '/placeholder-product.jpg'; }}
+                  />
+                  <Badge
+                    className="absolute top-2 left-2 text-xs"
+                    variant={product.productType === 'FOOD' ? 'success' : 'secondary'}
                   >
-                    {fetchingProduct === product.id
-                      ? <><span className="h-4 w-4 mr-1 animate-spin border-2 border-white border-t-transparent rounded-full inline-block" /> Loading...</>
-                      : <><ShoppingCart className="h-4 w-4 mr-1" />{product.stockQty === 0 ? 'Out of Stock' : 'Add to Cart'}</>
-                    }
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    {product.productType}
+                  </Badge>
+                  {user?.role === 'BUYER' && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(product.id); }}
+                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow flex items-center justify-center z-10"
+                      title={favoriteIds.has(product.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <Heart className={`h-4 w-4 ${favoriteIds.has(product.id) ? 'fill-rosewood-500 text-rosewood-500' : 'text-muted-foreground'}`} />
+                    </button>
+                  )}
+                  {product.stockQty === 0 && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">Out of Stock</span>
+                    </div>
+                  )}
+                </div>
+                <CardContent className="p-4 flex flex-col flex-1">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className="text-xs text-muted-foreground">{product.category?.name}</p>
+                      {product.seller?.storeName && (
+                        <Link
+                          to={`/store/${product.seller.id}`}
+                          className="text-xs text-rosewood-600 hover:underline font-medium truncate max-w-[100px]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {product.seller.storeName}
+                        </Link>
+                      )}
+                    </div>
+                    <Link to={`/products/${product.slug}`} className="font-semibold text-sm hover:text-rosewood-600 line-clamp-2 block mt-0.5">
+                      {product.name}
+                    </Link>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="font-bold text-rosewood-600">{formatCurrency(product.price)}</span>
+                    <span className="text-xs text-muted-foreground">{product.stockQty} left</span>
+                  </div>
+                  {user?.role === 'BUYER' && (
+                    <Button
+                      size="sm"
+                      className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700"
+                      disabled={product.stockQty === 0 || fetchingProduct === product.id}
+                      onClick={() => handleAddToCartClick(product)}
+                    >
+                      {fetchingProduct === product.id
+                        ? <><span className="h-4 w-4 mr-1 animate-spin border-2 border-white border-t-transparent rounded-full inline-block" /> Loading...</>
+                        : <><ShoppingCart className="h-4 w-4 mr-1" />{product.stockQty === 0 ? 'Out of Stock' : 'Add to Cart'}</>
+                      }
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Pagination */}

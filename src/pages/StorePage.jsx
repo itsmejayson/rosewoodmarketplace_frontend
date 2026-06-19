@@ -96,40 +96,84 @@ export default function StorePage() {
       {products.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">No products available yet.</div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {products.map((product) => {
-            const image = product.images?.[0]?.url;
-            return (
-              <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group">
-                <Link to={`/products/${product.slug}`}>
-                  <div className="aspect-square bg-muted overflow-hidden">
-                    {image ? (
-                      <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
-                    )}
-                  </div>
-                </Link>
-                <CardContent className="p-3">
+        <>
+          {/* Mobile: horizontal swipe carousel */}
+          <div
+            className="sm:hidden flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory -mx-4 px-4"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {products.map((product) => {
+              const image = product.images?.[0]?.url;
+              return (
+                <div key={product.id} className="snap-start flex-shrink-0 w-44">
+                  <Card className="overflow-hidden hover:shadow-md transition-shadow group h-full">
+                    <Link to={`/products/${product.slug}`}>
+                      <div className="aspect-square bg-muted overflow-hidden">
+                        {image ? (
+                          <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                        )}
+                      </div>
+                    </Link>
+                    <CardContent className="p-3">
+                      <Link to={`/products/${product.slug}`}>
+                        <p className="text-sm font-medium line-clamp-2 hover:text-rosewood-600">{product.name}</p>
+                      </Link>
+                      <p className="text-rosewood-600 font-bold mt-1">{formatCurrency(product.price)}</p>
+                      {user?.role === 'BUYER' && (
+                        <Button
+                          size="sm"
+                          className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
+                          onClick={() => handleAddToCart(product.id, product.name)}
+                          disabled={addingId === product.id}
+                        >
+                          {addingId === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: grid */}
+          <div className="hidden sm:grid grid-cols-3 md:grid-cols-4 gap-4">
+            {products.map((product) => {
+              const image = product.images?.[0]?.url;
+              return (
+                <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group">
                   <Link to={`/products/${product.slug}`}>
-                    <p className="text-sm font-medium line-clamp-2 hover:text-rosewood-600">{product.name}</p>
+                    <div className="aspect-square bg-muted overflow-hidden">
+                      {image ? (
+                        <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                      )}
+                    </div>
                   </Link>
-                  <p className="text-rosewood-600 font-bold mt-1">{formatCurrency(product.price)}</p>
-                  {user?.role === 'BUYER' && (
-                    <Button
-                      size="sm"
-                      className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
-                      onClick={() => handleAddToCart(product.id, product.name)}
-                      disabled={addingId === product.id}
-                    >
-                      {addingId === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  <CardContent className="p-3">
+                    <Link to={`/products/${product.slug}`}>
+                      <p className="text-sm font-medium line-clamp-2 hover:text-rosewood-600">{product.name}</p>
+                    </Link>
+                    <p className="text-rosewood-600 font-bold mt-1">{formatCurrency(product.price)}</p>
+                    {user?.role === 'BUYER' && (
+                      <Button
+                        size="sm"
+                        className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
+                        onClick={() => handleAddToCart(product.id, product.name)}
+                        disabled={addingId === product.id}
+                      >
+                        {addingId === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

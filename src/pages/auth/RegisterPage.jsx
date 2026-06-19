@@ -2,14 +2,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Store, Loader2, ShoppingCart, Package, Eye, EyeOff } from 'lucide-react';
+import { Store, Loader2, ShoppingCart, Package, Eye, EyeOff, Upload, FileText, X } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import useAuthStore from '../../store/authStore';
 import { toast } from '../../components/ui/toast';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const schema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -28,6 +28,9 @@ const ROLE_OPTIONS = [
   { value: 'SELLER', label: 'Sell Products', icon: Package },
 ];
 
+const ACCEPTED_TYPES = '.pdf,.doc,.docx,image/jpeg,image/png,image/webp,image/gif';
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 export default function RegisterPage() {
   const { register: registerUser, isLoading } = useAuthStore();
   const navigate = useNavigate();
@@ -35,14 +38,50 @@ export default function RegisterPage() {
   const defaultRole = searchParams.get('role') === 'SELLER' ? 'SELLER' : 'BUYER';
   const [role, setRole] = useState(defaultRole);
   const [showPassword, setShowPassword] = useState(false);
+  const [proofFile, setProofFile] = useState(null);
+  const [proofError, setProofError] = useState('');
+  const fileInputRef = useRef(null);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { role: defaultRole },
   });
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE) {
+      setProofError('File must be under 10 MB');
+      setProofFile(null);
+      return;
+    }
+    setProofFile(file);
+    setProofError('');
+  };
+
+  const removeFile = () => {
+    setProofFile(null);
+    setProofError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const onSubmit = async (data) => {
-    const result = await registerUser(data);
+    if (data.role === 'SELLER' && !proofFile) {
+      setProofError('Proof of residency document is required');
+      return;
+    }
+
+    // Send as FormData so the file can be included
+    const formData = new FormData();
+    formData.append('fullName', data.fullName);
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+    formData.append('phone', data.phone);
+    formData.append('role', data.role);
+    if (data.storeName) formData.append('storeName', data.storeName);
+    if (proofFile) formData.append('proofDocument', proofFile);
+
+    const result = await registerUser(formData);
     if (result.success) {
       toast({ title: 'Account created!', description: 'Welcome to Rosewood Marketplace.' });
       navigate('/');
@@ -72,7 +111,7 @@ export default function RegisterPage() {
                   <button
                     key={value}
                     type="button"
-                    onClick={() => { setRole(value); setValue('role', value); }}
+                    onClick={() => { setRole(value); setValue('role', value); setProofError(''); }}
                     className={`py-2 px-3 rounded-md border text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                       role === value
                         ? 'bg-rosewood-600 text-white border-rosewood-600'
@@ -129,6 +168,45 @@ export default function RegisterPage() {
               />
               {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
             </div>
+
+            {role === 'SELLER' && (
+              <div className="space-y-1">
+                <Label>
+                  Proof of Residency <span className="text-destructive">*</span>
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Upload a proof of residency document (e.g. barangay certificate of residency, utility bill, or any official document showing your current address). Accepted: PDF, DOC, DOCX, or image (max 10 MB).
+                </p>
+
+                {proofFile ? (
+                  <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/50">
+                    <FileText className="h-5 w-5 text-rosewood-600 flex-shrink-0" />
+                    <span className="text-sm truncate flex-1">{proofFile.name}</span>
+                    <button type="button" onClick={removeFile} className="text-muted-foreground hover:text-destructive flex-shrink-0">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex flex-col items-center gap-2 p-4 rounded-md border-2 border-dashed border-muted-foreground/30 hover:border-rosewood-400 hover:bg-rosewood-50 transition-colors text-muted-foreground hover:text-rosewood-600"
+                  >
+                    <Upload className="h-6 w-6" />
+                    <span className="text-sm font-medium">Click to upload document</span>
+                  </button>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPTED_TYPES}
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                {proofError && <p className="text-xs text-destructive">{proofError}</p>}
+              </div>
+            )}
 
             <Button type="submit" className="w-full bg-rosewood-600 hover:bg-rosewood-700" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
