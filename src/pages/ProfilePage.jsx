@@ -54,6 +54,7 @@ export default function ProfilePage() {
     try {
       const { data } = await userAPI.updateProfile(values);
       updateUser(data.data);
+      profileForm.reset(values); // keep form populated with saved values
       setProfileMsg({ type: 'success', text: 'Profile updated successfully' });
     } catch (err) {
       setProfileMsg({ type: 'error', text: err.response?.data?.message || 'Update failed' });

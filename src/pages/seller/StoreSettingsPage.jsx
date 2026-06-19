@@ -9,7 +9,7 @@ import { toast } from '../../components/ui/toast';
 import { Loader2, Store, Save } from 'lucide-react';
 
 export default function StoreSettingsPage() {
-  const { user, fetchMe } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     storeName: '',
@@ -44,9 +44,13 @@ export default function StoreSettingsPage() {
         await userAPI.updateProfile({ storeName: form.storeName });
       }
 
-      if (fetchMe) {
-        await fetchMe();
-      }
+      // Update local auth store directly so the form stays populated
+      updateUser({
+        storeName: form.storeName,
+        storeDescription: form.storeDescription,
+        storeAddress: form.storeAddress,
+        defaultDeliveryFee: parseFloat(form.defaultDeliveryFee) || 0,
+      });
 
       toast({ title: 'Store settings saved' });
     } catch (err) {
