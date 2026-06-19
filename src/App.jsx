@@ -25,6 +25,8 @@ import SellerProductsPage from './pages/seller/SellerProductsPage';
 import ProductFormPage from './pages/seller/ProductFormPage';
 import SellerOrdersPage from './pages/seller/SellerOrdersPage';
 import SellerOrderDetailPage from './pages/seller/SellerOrderDetailPage';
+import SellerRefundsPage from './pages/seller/SellerRefundsPage';
+import SellerReviewsPage from './pages/seller/SellerReviewsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage from './pages/ProfilePage';
 import StoresPage from './pages/StoresPage';
@@ -102,6 +104,8 @@ export default function App() {
         <Route path="/seller/products/:id/edit" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><ProductFormPage /></PrivateRoute>} />
         <Route path="/seller/orders" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><SellerOrdersPage /></PrivateRoute>} />
         <Route path="/seller/orders/:id" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><SellerOrderDetailPage /></PrivateRoute>} />
+        <Route path="/seller/refunds" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><SellerRefundsPage /></PrivateRoute>} />
+        <Route path="/seller/reviews" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><SellerReviewsPage /></PrivateRoute>} />
 
         {/* Admin */}
         <Route path="/admin" element={<PrivateRoute roles={['ADMIN']}><AdminDashboardPage /></PrivateRoute>} />

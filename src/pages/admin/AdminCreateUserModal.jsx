@@ -87,7 +87,13 @@ export default function AdminCreateUserModal({ onClose, onCreated }) {
 
           <div className="space-y-1">
             <Label>Contact Number</Label>
-            <Input placeholder="+63 9XX XXX XXXX" {...register('phone')} />
+            <Input
+              type="tel"
+              inputMode="tel"
+              placeholder="+63 9XX XXX XXXX"
+              {...register('phone')}
+              onInput={(e) => { e.target.value = e.target.value.replace(/[^0-9+\-()\s]/g, ''); }}
+            />
             {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
           </div>
 

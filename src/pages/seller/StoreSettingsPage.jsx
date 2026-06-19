@@ -110,6 +110,9 @@ export default function StoreSettingsPage() {
               <Input
                 id="defaultDeliveryFee"
                 type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
                 value={form.defaultDeliveryFee}
                 onChange={handleChange('defaultDeliveryFee')}
               />

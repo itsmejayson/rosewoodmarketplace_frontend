@@ -139,7 +139,13 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-1">
               <Label>Phone</Label>
-              <Input {...profileForm.register('phone')} placeholder="+63 9XX XXX XXXX" />
+              <Input
+                {...profileForm.register('phone')}
+                type="tel"
+                inputMode="tel"
+                placeholder="+63 9XX XXX XXXX"
+                onInput={(e) => { e.target.value = e.target.value.replace(/[^0-9+\-()\s]/g, ''); }}
+              />
             </div>
             <div className="space-y-1">
               <Label>Address</Label>

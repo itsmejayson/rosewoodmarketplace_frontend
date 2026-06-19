@@ -327,7 +327,6 @@ export default function CheckoutPage() {
                   )}
                   {[
                     { id: 'shippingName', label: 'Full Name', placeholder: 'Juan dela Cruz' },
-                    { id: 'shippingPhone', label: 'Contact Number', placeholder: '09XX-XXX-XXXX' },
                     { id: 'shippingState', label: 'Phase', placeholder: 'e.g. Phase 1' },
                     { id: 'shippingAddress', label: 'Street', placeholder: 'e.g. Rizal St' },
                     { id: 'shippingCity', label: 'Subdivision', placeholder: 'e.g. Villa Verde Subdivision' },
@@ -338,6 +337,18 @@ export default function CheckoutPage() {
                       {errors[id] && <p className="text-xs text-destructive">{errors[id].message}</p>}
                     </div>
                   ))}
+                  <div className="space-y-1">
+                    <Label htmlFor="shippingPhone">Contact Number</Label>
+                    <Input
+                      id="shippingPhone"
+                      type="tel"
+                      inputMode="tel"
+                      placeholder="09XX-XXX-XXXX"
+                      {...register('shippingPhone')}
+                      onInput={(e) => { e.target.value = e.target.value.replace(/[^0-9+\-()\s]/g, ''); }}
+                    />
+                    {errors.shippingPhone && <p className="text-xs text-destructive">{errors.shippingPhone.message}</p>}
+                  </div>
                   <div className="space-y-1">
                     <Label htmlFor="notes">Order Notes (optional)</Label>
                     <Input id="notes" placeholder="Special instructions..." {...register('notes')} />

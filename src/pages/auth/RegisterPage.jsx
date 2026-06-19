@@ -119,7 +119,14 @@ export default function RegisterPage() {
 
             <div className="space-y-1">
               <Label htmlFor="phone">Contact Number</Label>
-              <Input id="phone" type="tel" placeholder="+63-9XX-XXX-XXXX" {...register('phone')} />
+              <Input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                placeholder="+63-9XX-XXX-XXXX"
+                {...register('phone')}
+                onInput={(e) => { e.target.value = e.target.value.replace(/[^0-9+\-()\s]/g, ''); }}
+              />
               {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
             </div>
 

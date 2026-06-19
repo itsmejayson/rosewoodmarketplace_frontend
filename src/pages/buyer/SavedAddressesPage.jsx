@@ -74,7 +74,10 @@ export default function SavedAddressesPage() {
   };
 
   const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    let value = e.target.value;
+    if (field === 'phone') value = value.replace(/[^0-9+\-()\s]/g, '');
+    if (field === 'zip') value = value.replace(/\D/g, '');
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleDelete = async (id) => {
@@ -260,6 +263,9 @@ export default function SavedAddressesPage() {
                   <Label htmlFor="phone">Phone</Label>
                   <Input
                     id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    placeholder="+63 9XX XXX XXXX"
                     value={form.phone}
                     onChange={handleChange('phone')}
                   />
@@ -292,6 +298,8 @@ export default function SavedAddressesPage() {
                   <Label htmlFor="zip">ZIP</Label>
                   <Input
                     id="zip"
+                    inputMode="numeric"
+                    placeholder="e.g. 4000"
                     value={form.zip}
                     onChange={handleChange('zip')}
                   />

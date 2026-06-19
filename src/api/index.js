@@ -139,6 +139,7 @@ export const reviewAPI = {
   create: (data) => api.post('/reviews', data),
   forProduct: (productId) => api.get(`/reviews/product/${productId}`),
   my: () => api.get('/reviews/my'),
+  seller: () => api.get('/reviews/seller'),
   delete: (id) => api.delete(`/reviews/${id}`),
 };
 

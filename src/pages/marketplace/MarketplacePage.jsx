@@ -223,6 +223,8 @@ export default function MarketplacePage() {
             key={`min-${params.minPrice}`}
             type="number"
             min="0"
+            step="0.01"
+            inputMode="decimal"
             placeholder="Min ₱"
             className="w-[110px]"
             defaultValue={params.minPrice}
@@ -233,6 +235,8 @@ export default function MarketplacePage() {
             key={`max-${params.maxPrice}`}
             type="number"
             min="0"
+            step="0.01"
+            inputMode="decimal"
             placeholder="Max ₱"
             className="w-[110px]"
             defaultValue={params.maxPrice}

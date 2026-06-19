@@ -1,5 +1,5 @@
 ﻿import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, Bell, User, LogOut, Store, Menu, X, LayoutDashboard, Package, ShoppingBag, Home, Users, Heart, MapPin, RotateCcw, Settings, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, Bell, User, LogOut, Store, Menu, X, LayoutDashboard, Package, ShoppingBag, Home, Users, Heart, MapPin, RotateCcw, Settings, AlertTriangle, Star } from 'lucide-react';
 
 function RpLogo({ className = '' }) {
   return (
@@ -46,7 +46,7 @@ export default function Navbar() {
   const { user, logout } = useAuthStore();
   const { cart } = useCartStore();
   const { unreadCount } = useNotificationStore();
-  const { pendingCount, fetchPendingCount } = useSellerOrderStore();
+  const { pendingCount, pendingRefundCount, fetchPendingCount } = useSellerOrderStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -81,6 +81,8 @@ export default function Navbar() {
         { to: '/seller/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/seller/products', label: 'Products', icon: Package },
         { to: '/seller/orders', label: 'Orders', icon: ShoppingBag, badge: pendingCount },
+        { to: '/seller/refunds', label: 'Refunds', icon: RotateCcw, badge: pendingRefundCount },
+        { to: '/seller/reviews', label: 'Reviews', icon: Star },
         { to: '/seller/settings', label: 'Store Settings', icon: Settings },
       ]
     : user?.role === 'BUYER'

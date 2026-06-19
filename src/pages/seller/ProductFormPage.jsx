@@ -232,13 +232,13 @@ export default function ProductFormPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Price (₱)</Label>
-                <Input type="number" step="0.01" min="0" placeholder="0.00" {...register('price')} />
+                <Input type="number" step="0.01" min="0" inputMode="decimal" placeholder="0.00" {...register('price')} />
                 {errors.price && <p className="text-xs text-destructive">{errors.price.message}</p>}
                 <p className="text-xs text-muted-foreground">Used as the display price. If you add variant groups below, the lowest variant price will be shown instead.</p>
               </div>
               <div className="space-y-1">
                 <Label>Stock Quantity</Label>
-                <Input type="number" min="0" placeholder="0" {...register('stockQty')} />
+                <Input type="number" min="0" step="1" inputMode="numeric" placeholder="0" {...register('stockQty')} />
                 {errors.stockQty && <p className="text-xs text-destructive">{errors.stockQty.message}</p>}
               </div>
             </div>
@@ -349,6 +349,8 @@ export default function ProductFormPage() {
                       <Input
                         type="number"
                         min="1"
+                        step="1"
+                        inputMode="numeric"
                         value={group.maxSelect}
                         onChange={e => updateGroup(gi, 'maxSelect', parseInt(e.target.value) || 1)}
                         className="w-16 h-7 text-center"
@@ -370,6 +372,7 @@ export default function ProductFormPage() {
                             type="number"
                             step="0.01"
                             min="0"
+                            inputMode="decimal"
                             placeholder="0"
                             value={opt.priceModifier}
                             onChange={e => updateOption(gi, oi, 'priceModifier', parseFloat(e.target.value) || 0)}
@@ -430,6 +433,7 @@ export default function ProductFormPage() {
                       type="number"
                       step="0.01"
                       min="0"
+                      inputMode="decimal"
                       placeholder="0"
                       value={addon.price}
                       onChange={e => updateAddon(i, 'price', parseFloat(e.target.value) || 0)}
