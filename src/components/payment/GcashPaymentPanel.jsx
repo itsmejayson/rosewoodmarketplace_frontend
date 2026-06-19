@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { orderAPI } from '../../api';
 import { toast } from '../ui/toast';
+import { formatCurrency } from '../../lib/utils';
 
 const STATUS_UI = {
   PENDING: {
@@ -39,13 +40,14 @@ const STATUS_UI = {
 const GCASH_NUMBER = import.meta.env.VITE_GCASH_NUMBER || '09XX-XXX-XXXX';
 const GCASH_NAME = import.meta.env.VITE_GCASH_NAME || 'RP Market';
 
-export default function GcashPaymentPanel({ transaction, orderId, onReceiptUploaded }) {
+export default function GcashPaymentPanel({ transaction, orderId, onReceiptUploaded, amount: amountOverride }) {
   const [isUploading, setIsUploading] = useState(false);
   const fileRef = useRef(null);
 
   if (!transaction) return null;
 
-  const { paymentStatus, referenceNumber, receiptImage, amount, rejectionReason } = transaction;
+  const { paymentStatus, referenceNumber, receiptImage, rejectionReason } = transaction;
+  const amount = amountOverride ?? transaction.amount;
   const ui = STATUS_UI[paymentStatus] || STATUS_UI.PENDING;
   const StatusIcon = ui.icon;
   const canUpload = paymentStatus === 'PENDING' || paymentStatus === 'REJECTED';
@@ -96,7 +98,7 @@ export default function GcashPaymentPanel({ transaction, orderId, onReceiptUploa
             {/* Amount */}
             <div className="text-center">
               <p className="text-xs text-muted-foreground uppercase tracking-wide">Amount to Send</p>
-              <p className="text-3xl font-bold text-blue-600">â‚±{parseFloat(amount || 0).toFixed(2)}</p>
+              <p className="text-3xl font-bold text-blue-600">{formatCurrency(amount || 0)}</p>
             </div>
 
             {/* GCash number */}
@@ -128,7 +130,7 @@ export default function GcashPaymentPanel({ transaction, orderId, onReceiptUploa
             <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">How to pay:</p>
               <p>1. Open GCash and tap <strong>Send Money</strong>.</p>
-              <p>2. Enter <strong>{GCASH_NUMBER}</strong> and send <strong>â‚±{parseFloat(amount || 0).toFixed(2)}</strong>.</p>
+              <p>2. Enter <strong>{GCASH_NUMBER}</strong> and send <strong>{formatCurrency(amount || 0)}</strong>.</p>
               {referenceNumber && <p>3. Put <strong>{referenceNumber}</strong> as the message/note.</p>}
               <p>{referenceNumber ? '4.' : '3.'} Screenshot your receipt and upload it below.</p>
             </div>

@@ -1,5 +1,5 @@
 ﻿import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, Bell, User, LogOut, Store, Menu, X, LayoutDashboard, Package, ShoppingBag, Home, Users } from 'lucide-react';
+import { ShoppingCart, Bell, User, LogOut, Store, Menu, X, LayoutDashboard, Package, ShoppingBag, Home, Users, Heart, MapPin, RotateCcw, Settings, AlertTriangle } from 'lucide-react';
 
 function RpLogo({ className = '' }) {
   return (
@@ -81,17 +81,22 @@ export default function Navbar() {
         { to: '/seller/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/seller/products', label: 'Products', icon: Package },
         { to: '/seller/orders', label: 'Orders', icon: ShoppingBag, badge: pendingCount },
+        { to: '/seller/settings', label: 'Store Settings', icon: Settings },
       ]
     : user?.role === 'BUYER'
     ? [
         { to: '/marketplace', label: 'Marketplace', icon: Home },
         { to: '/stores', label: 'Stores', icon: Store },
         { to: '/orders', label: 'My Orders', icon: ShoppingBag },
+        { to: '/favorites', label: 'Favorites', icon: Heart },
+        { to: '/addresses', label: 'Saved Addresses', icon: MapPin },
+        { to: '/refunds', label: 'Refunds', icon: RotateCcw },
       ]
     : user?.role === 'ADMIN'
     ? [
         { to: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/admin/users', label: 'Users', icon: Users },
+        { to: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
         { to: '/marketplace', label: 'Marketplace', icon: Home },
         { to: '/stores', label: 'Stores', icon: Store },
       ]

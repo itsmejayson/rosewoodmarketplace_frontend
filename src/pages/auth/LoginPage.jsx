@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Store, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Store, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -17,6 +18,7 @@ const schema = z.object({
 
 export default function LoginPage() {
   const { login, isLoading } = useAuthStore();
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
@@ -56,7 +58,12 @@ export default function LoginPage() {
             </div>
             <div className="space-y-1">
               <Label>Password</Label>
-              <Input type="password" placeholder="••••••••" {...register('password')} />
+              <div className="relative">
+                <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...register('password')} className="pr-10" />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
             </div>
             <Button type="submit" className="w-full bg-rosewood-600 hover:bg-rosewood-700" disabled={isLoading}>

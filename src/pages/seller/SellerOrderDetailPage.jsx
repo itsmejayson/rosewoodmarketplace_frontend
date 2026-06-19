@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Bike, ClipboardCheck, Truck, Store } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Bike, ClipboardCheck, Truck, Store, X, RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { orderAPI } from '../../api';
+import { orderAPI, refundAPI } from '../../api';
 import { formatCurrency, formatDate, ORDER_STATUS_COLORS } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
 import TransactionChat from '../../components/chat/TransactionChat';
@@ -24,6 +24,10 @@ export default function SellerOrderDetailPage() {
   // Confirm order state
   const [deliveryFeeInput, setDeliveryFeeInput] = useState('');
   const [showConfirmPanel, setShowConfirmPanel] = useState(false);
+
+  // Refund state
+  const [refundNotes, setRefundNotes] = useState('');
+  const [showRefundReject, setShowRefundReject] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -60,6 +64,8 @@ export default function SellerOrderDetailPage() {
   if (!order) return null;
 
   const tx = order.transaction;
+  const computedSubtotal = (order.orderItems || []).reduce((sum, item) => sum + parseFloat(item.totalPrice || 0), 0);
+  const computedTotal = computedSubtotal + parseFloat(order.deliveryFee || 0);
   const canApproveGcash = tx?.paymentMethod === 'GCASH' && tx?.paymentStatus === 'PENDING_VERIFICATION';
   const canConfirmCash = tx?.paymentMethod === 'CASH' && tx?.paymentStatus === 'PENDING' && order.status === 'AWAITING_PAYMENT';
   const nextStatus = NEXT_STATUS[order.status];
@@ -175,7 +181,7 @@ export default function SellerOrderDetailPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <Loader2 className="h-5 w-5 text-blue-600 animate-spin flex-shrink-0" />
             <p className="text-sm text-blue-800">
-              Order confirmed. Waiting for buyer to pay <strong>{formatCurrency(order.totalAmount)}</strong>.
+              Order confirmed. Waiting for buyer to pay <strong>{formatCurrency(computedTotal)}</strong>.
             </p>
           </CardContent>
         </Card>
@@ -185,7 +191,7 @@ export default function SellerOrderDetailPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <Store className="h-5 w-5 text-green-600 flex-shrink-0" />
             <p className="text-sm text-green-800">
-              This is a <strong>pick-up order</strong>. Waiting for buyer to complete payment of <strong>{formatCurrency(order.totalAmount)}</strong>.
+              This is a <strong>pick-up order</strong>. Waiting for buyer to complete payment of <strong>{formatCurrency(computedTotal)}</strong>.
             </p>
           </CardContent>
         </Card>
@@ -270,6 +276,78 @@ export default function SellerOrderDetailPage() {
         )}
       </div>
 
+      {/* ── Refund Requested (Task 12) ───────────────────────────────────── */}
+      {order.refund && order.refund.status === 'PENDING' && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2 text-orange-800">
+              <RotateCcw className="h-4 w-4 text-orange-600" /> Refund Requested
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div>
+              <p className="text-xs font-medium text-orange-700 uppercase tracking-wide">Buyer's Reason</p>
+              <p className="text-orange-900 mt-0.5">{order.refund.reason || 'No reason provided'}</p>
+            </div>
+
+            {!showRefundReject ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => act(() => refundAPI.process(order.id, { approved: true, notes: refundNotes }), 'Refund approved')}
+                  disabled={isActing}
+                >
+                  {isActing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                  Approve Refund
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  onClick={() => setShowRefundReject(true)}
+                  disabled={isActing}
+                >
+                  <XCircle className="h-4 w-4 mr-2" /> Reject Refund
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  className="w-full h-9 rounded-md border border-input px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring bg-white"
+                  placeholder="Reason for rejecting this refund…"
+                  value={refundNotes}
+                  onChange={(e) => setRefundNotes(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      if (!refundNotes.trim()) { toast({ title: 'Please provide a reason for rejection', variant: 'destructive' }); return; }
+                      act(() => refundAPI.process(order.id, { approved: false, notes: refundNotes }), 'Refund rejected');
+                    }}
+                    disabled={isActing}
+                  >
+                    {isActing ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Reject'}
+                  </Button>
+                  <Button variant="ghost" onClick={() => { setShowRefundReject(false); setRefundNotes(''); }}>Cancel</Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {order.refund && (order.refund.status === 'APPROVED' || order.refund.status === 'REJECTED') && (
+        <div className={`flex flex-wrap items-center gap-2 rounded-lg border px-4 py-3 text-sm ${
+          order.refund.status === 'APPROVED'
+            ? 'border-green-200 bg-green-50 text-green-800'
+            : 'border-red-200 bg-red-50 text-red-800'
+        }`}>
+          <RotateCcw className="h-4 w-4 flex-shrink-0" />
+          <span className="font-semibold">Refund {order.refund.status}</span>
+          {order.refund.notes && <span className="text-muted-foreground">— {order.refund.notes}</span>}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader><CardTitle className="text-sm">Buyer</CardTitle></CardHeader>
@@ -315,26 +393,44 @@ export default function SellerOrderDetailPage() {
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Package className="h-4 w-4" /> Items</CardTitle></CardHeader>
         <CardContent className="divide-y">
           {order.orderItems?.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 py-3">
+            <div key={item.id} className="flex gap-3 py-3">
               {item.product?.images?.[0] && (
-                <img src={item.product.images[0].url} alt={item.productName} className="w-12 h-12 rounded-lg object-cover border" />
+                <img src={item.product.images[0].url} alt={item.productName} className="w-12 h-12 rounded-lg object-cover border flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{item.productName || item.product?.name}</p>
+                <p className="font-medium text-sm">{item.productName || item.product?.name}</p>
                 <p className="text-xs text-muted-foreground">Qty: {item.quantity} × {formatCurrency(item.unitPrice)}</p>
+                {item.selectedOptions?.variants?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {item.selectedOptions.variants.map((v, i) => (
+                      <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-rosewood-50 text-rosewood-700 border border-rosewood-200">
+                        {v.groupName ? `${v.groupName}: ` : ''}{v.optionName}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {item.selectedOptions?.addons?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {item.selectedOptions.addons.map((a, i) => (
+                      <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-muted text-muted-foreground border">
+                        +{a.name} {formatCurrency(a.price)}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <p className="font-semibold text-sm">{formatCurrency(item.totalPrice)}</p>
+              <p className="font-semibold text-sm flex-shrink-0">{formatCurrency(item.totalPrice)}</p>
             </div>
           ))}
           <div className="pt-3 space-y-1 text-sm">
-            <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span></div>
+            <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{formatCurrency(computedSubtotal)}</span></div>
             {order.deliveryFee != null && parseFloat(order.deliveryFee) > 0 && (
               <div className="flex justify-between text-muted-foreground">
                 <span className="flex items-center gap-1"><Bike className="h-3 w-3" /> Delivery Fee</span>
                 <span className="text-rosewood-600 font-medium">{formatCurrency(order.deliveryFee)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-base pt-1 border-t"><span>Total</span><span className="text-rosewood-600">{formatCurrency(order.totalAmount)}</span></div>
+            <div className="flex justify-between font-bold text-base pt-1 border-t"><span>Total</span><span className="text-rosewood-600">{formatCurrency(computedTotal)}</span></div>
           </div>
         </CardContent>
       </Card>
@@ -401,13 +497,28 @@ export default function SellerOrderDetailPage() {
         </Card>
       )}
 
+      {/* Chat modal */}
       {showChat && tx && (
-        <Card>
-          <CardHeader><CardTitle className="text-sm">Chat with Buyer</CardTitle></CardHeader>
-          <CardContent>
-            <TransactionChat transactionId={tx.id} />
-          </CardContent>
-        </Card>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50" onClick={() => setShowChat(false)}>
+          <div
+            className="bg-background rounded-xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden"
+            style={{ maxHeight: '80vh' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-rosewood-600" />
+                <span className="font-semibold text-sm">Chat with Buyer</span>
+              </div>
+              <button onClick={() => setShowChat(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <TransactionChat transactionId={tx.id} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

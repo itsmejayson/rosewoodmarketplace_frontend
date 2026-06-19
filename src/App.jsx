@@ -15,7 +15,11 @@ import CartPage from './pages/buyer/CartPage';
 import CheckoutPage from './pages/buyer/CheckoutPage';
 import OrdersPage from './pages/buyer/OrdersPage';
 import OrderDetailPage from './pages/buyer/OrderDetailPage';
+import FavoritesPage from './pages/buyer/FavoritesPage';
+import SavedAddressesPage from './pages/buyer/SavedAddressesPage';
+import RefundsPage from './pages/buyer/RefundsPage';
 import SellerDashboardPage from './pages/seller/SellerDashboardPage';
+import StoreSettingsPage from './pages/seller/StoreSettingsPage';
 import SellerProductsPage from './pages/seller/SellerProductsPage';
 import ProductFormPage from './pages/seller/ProductFormPage';
 import SellerOrdersPage from './pages/seller/SellerOrdersPage';
@@ -30,6 +34,7 @@ import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
 import AdminOnlinePage from './pages/admin/AdminOnlinePage';
 import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 import AdminPendingSellersPage from './pages/admin/AdminPendingSellersPage';
+import AdminDisputesPage from './pages/admin/AdminDisputesPage';
 import PendingApprovalPage from './pages/PendingApprovalPage';
 
 function PrivateRoute({ children, roles }) {
@@ -84,9 +89,13 @@ export default function App() {
         <Route path="/checkout" element={<PrivateRoute roles={['BUYER']}><CheckoutPage /></PrivateRoute>} />
         <Route path="/orders" element={<PrivateRoute roles={['BUYER']}><OrdersPage /></PrivateRoute>} />
         <Route path="/orders/:id" element={<PrivateRoute roles={['BUYER', 'ADMIN']}><OrderDetailPage /></PrivateRoute>} />
+        <Route path="/favorites" element={<PrivateRoute roles={['BUYER']}><FavoritesPage /></PrivateRoute>} />
+        <Route path="/addresses" element={<PrivateRoute roles={['BUYER']}><SavedAddressesPage /></PrivateRoute>} />
+        <Route path="/refunds" element={<PrivateRoute roles={['BUYER']}><RefundsPage /></PrivateRoute>} />
 
         {/* Seller */}
         <Route path="/seller/dashboard" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><SellerDashboardPage /></PrivateRoute>} />
+        <Route path="/seller/settings" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><StoreSettingsPage /></PrivateRoute>} />
         <Route path="/seller/products" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><SellerProductsPage /></PrivateRoute>} />
         <Route path="/seller/products/new" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><ProductFormPage /></PrivateRoute>} />
         <Route path="/seller/products/:id/edit" element={<PrivateRoute roles={['SELLER', 'ADMIN']}><ProductFormPage /></PrivateRoute>} />
@@ -100,6 +109,7 @@ export default function App() {
         <Route path="/admin/online" element={<PrivateRoute roles={['ADMIN']}><AdminOnlinePage /></PrivateRoute>} />
         <Route path="/admin/transactions" element={<PrivateRoute roles={['ADMIN']}><AdminTransactionsPage /></PrivateRoute>} />
         <Route path="/admin/pending-sellers" element={<PrivateRoute roles={['ADMIN']}><AdminPendingSellersPage /></PrivateRoute>} />
+        <Route path="/admin/disputes" element={<PrivateRoute roles={['ADMIN']}><AdminDisputesPage /></PrivateRoute>} />
 
         {/* Shared */}
         <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />

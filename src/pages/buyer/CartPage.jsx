@@ -15,11 +15,11 @@ export default function CartPage() {
 
   useEffect(() => { fetchCart(); }, []);
 
-  const handleUpdate = async (productId, qty) => {
+  const handleUpdate = async (itemId, productId, qty) => {
     if (qty < 1) return;
-    setUpdatingId(productId);
+    setUpdatingId(itemId);
     try {
-      await updateItem(productId, qty);
+      await updateItem(productId, qty, itemId);
     } catch (err) {
       toast({ title: err.response?.data?.message || 'Update failed', variant: 'destructive' });
     } finally {
@@ -27,9 +27,9 @@ export default function CartPage() {
     }
   };
 
-  const handleRemove = async (productId) => {
+  const handleRemove = async (itemId, productId) => {
     try {
-      await removeItem(productId);
+      await removeItem(productId, itemId);
       toast({ title: 'Item removed from cart' });
     } catch {
       toast({ title: 'Failed to remove item', variant: 'destructive' });
@@ -76,33 +76,53 @@ export default function CartPage() {
                       {item.product.name}
                     </Link>
                     <p className="text-sm text-muted-foreground">{item.product.seller?.fullName}</p>
-                    <p className="text-rosewood-600 font-bold mt-1">{formatCurrency(item.product.price)}</p>
+                    {item.selectedOptions?.variants?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.selectedOptions.variants.map((v, i) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-rosewood-50 text-rosewood-700 border border-rosewood-200">
+                            {v.optionName}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {item.selectedOptions?.addons?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.selectedOptions.addons.map((a, i) => (
+                          <span key={i} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-muted text-muted-foreground border">
+                            {a.name} +{formatCurrency(a.price)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-rosewood-600 font-bold mt-1">
+                      {formatCurrency(item.selectedOptions?.unitPrice ?? item.product.price)}
+                    </p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <button onClick={() => handleRemove(item.productId)} className="text-muted-foreground hover:text-destructive">
+                    <button onClick={() => handleRemove(item.id, item.productId)} className="text-muted-foreground hover:text-destructive">
                       <Trash2 className="h-4 w-4" />
                     </button>
                     <div className="flex items-center border rounded-md">
                       <button
                         className="p-1 hover:bg-muted"
-                        onClick={() => handleUpdate(item.productId, item.quantity - 1)}
-                        disabled={updatingId === item.productId || item.quantity <= 1}
+                        onClick={() => handleUpdate(item.id, item.productId, item.quantity - 1)}
+                        disabled={updatingId === item.id || item.quantity <= 1}
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="px-3 text-sm font-medium min-w-[2rem] text-center">
-                        {updatingId === item.productId ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : item.quantity}
+                        {updatingId === item.id ? <Loader2 className="h-3 w-3 animate-spin mx-auto" /> : item.quantity}
                       </span>
                       <button
                         className="p-1 hover:bg-muted"
-                        onClick={() => handleUpdate(item.productId, item.quantity + 1)}
-                        disabled={updatingId === item.productId || item.quantity >= item.product.stockQty}
+                        onClick={() => handleUpdate(item.id, item.productId, item.quantity + 1)}
+                        disabled={updatingId === item.id || item.quantity >= item.product.stockQty}
                       >
                         <Plus className="h-3 w-3" />
                       </button>
                     </div>
                     <p className="text-sm font-medium">
-                      {formatCurrency(parseFloat(item.product.price) * item.quantity)}
+                      {formatCurrency((item.selectedOptions?.unitPrice ?? parseFloat(item.product.price)) * item.quantity)}
                     </p>
                   </div>
                 </div>

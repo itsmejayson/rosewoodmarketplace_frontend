@@ -14,19 +14,21 @@ export default function TransactionChat({ transactionId }) {
   const [imageFile, setImageFile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const bottomRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const fileRef = useRef(null);
 
   const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   };
 
   const fetchMessages = useCallback(async () => {
     try {
       const { data } = await messageAPI.getMessages(transactionId);
       setMessages(data.data);
-    } catch {
-      // silently fail — user may not have access yet
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +97,7 @@ export default function TransactionChat({ transactionId }) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 ? (
           <div className="text-center py-10">
             <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
@@ -144,7 +146,6 @@ export default function TransactionChat({ transactionId }) {
             );
           })
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Image preview */}

@@ -55,7 +55,9 @@ export const cartAPI = {
   get: () => api.get('/cart'),
   addItem: (data) => api.post('/cart/items', data),
   updateItem: (productId, data) => api.put(`/cart/items/${productId}`, data),
-  removeItem: (productId) => api.delete(`/cart/items/${productId}`),
+  removeItem: (productId, itemId) => itemId
+    ? api.delete(`/cart/items/${productId}`, { data: { itemId } })
+    : api.delete(`/cart/items/${productId}`),
   clear: () => api.delete('/cart'),
 };
 
@@ -114,4 +116,49 @@ export const notificationAPI = {
   markRead: (id) => api.put(`/notifications/${id}/read`),
   markAllRead: () => api.put('/notifications/read-all'),
   delete: (id) => api.delete(`/notifications/${id}`),
+};
+
+// ── Favorites ─────────────────────────────────────────────────────────────────
+export const favoriteAPI = {
+  list: () => api.get('/favorites'),
+  toggle: (productId) => api.post(`/favorites/${productId}`),
+  check: (productId) => api.get(`/favorites/check/${productId}`),
+};
+
+// ── Addresses ─────────────────────────────────────────────────────────────────
+export const addressAPI = {
+  list: () => api.get('/addresses'),
+  create: (data) => api.post('/addresses', data),
+  update: (id, data) => api.put(`/addresses/${id}`, data),
+  delete: (id) => api.delete(`/addresses/${id}`),
+  setDefault: (id) => api.patch(`/addresses/${id}/default`),
+};
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+export const reviewAPI = {
+  create: (data) => api.post('/reviews', data),
+  forProduct: (productId) => api.get(`/reviews/product/${productId}`),
+  my: () => api.get('/reviews/my'),
+  delete: (id) => api.delete(`/reviews/${id}`),
+};
+
+// ── Refunds ───────────────────────────────────────────────────────────────────
+export const refundAPI = {
+  request: (orderId, data) => api.post(`/refunds/request/${orderId}`, data),
+  process: (orderId, data) => api.patch(`/refunds/${orderId}/process`, data),
+  my: () => api.get('/refunds/my'),
+  seller: () => api.get('/refunds/seller'),
+};
+
+// ── Disputes ──────────────────────────────────────────────────────────────────
+export const disputeAPI = {
+  open: (orderId, data) => api.post(`/disputes/open/${orderId}`, data),
+  resolve: (orderId, data) => api.patch(`/disputes/${orderId}/resolve`, data),
+  admin: () => api.get('/disputes/admin'),
+  my: () => api.get('/disputes/my'),
+};
+
+// ── Store settings ────────────────────────────────────────────────────────────
+export const storeSettingsAPI = {
+  update: (data) => api.put('/stores/settings', data),
 };

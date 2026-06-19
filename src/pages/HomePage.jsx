@@ -79,7 +79,7 @@ export default function HomePage() {
               {
                 icon: Shield,
                 title: 'Secure Payments',
-                desc: 'Pay with confidence using Stripe\'s industry-leading payment security.',
+                desc: 'Pay conveniently via GCash or Cash on Delivery — simple, trusted, and local.',
                 color: 'text-blue-600 bg-blue-50',
               },
               {

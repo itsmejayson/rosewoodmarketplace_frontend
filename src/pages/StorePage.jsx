@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Store, Loader2, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Store, Loader2, ShoppingCart, Star, MapPin } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { storeAPI } from '../api';
@@ -53,7 +53,7 @@ export default function StorePage() {
       </Link>
 
       {/* Store header */}
-      <div className="flex items-center gap-5 mb-8 p-6 rounded-xl border bg-white shadow-sm">
+      <div className="flex items-start gap-5 mb-8 p-6 rounded-xl border bg-white shadow-sm">
         {store.profileImage ? (
           <img src={store.profileImage} alt={store.storeName} className="h-20 w-20 rounded-full object-cover border-2 border-rosewood-200 flex-shrink-0" />
         ) : (
@@ -64,6 +64,29 @@ export default function StorePage() {
         <div>
           <h1 className="text-2xl font-bold">{store.storeName}</h1>
           <p className="text-muted-foreground text-sm">by {store.fullName}</p>
+          {store.avgRating != null && (
+            <div className="flex items-center gap-1 mt-1">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Star
+                  key={i}
+                  className={`h-4 w-4 ${i < Math.round(store.avgRating) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
+                />
+              ))}
+              <span className="text-sm text-muted-foreground ml-1">{store.avgRating.toFixed(1)} ({store.reviewCount || 0} reviews)</span>
+            </div>
+          )}
+          {store.storeDescription && (
+            <p className="text-sm text-muted-foreground mt-2">{store.storeDescription}</p>
+          )}
+          {store.storeAddress && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+              <MapPin className="h-4 w-4 flex-shrink-0" />
+              <span>{store.storeAddress}</span>
+            </div>
+          )}
+          {store.defaultDeliveryFee != null && parseFloat(store.defaultDeliveryFee) > 0 && (
+            <p className="text-sm text-muted-foreground mt-1">Delivery fee: {formatCurrency(store.defaultDeliveryFee)}</p>
+          )}
           <p className="text-xs text-muted-foreground mt-1">Member since {new Date(store.createdAt).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</p>
         </div>
       </div>

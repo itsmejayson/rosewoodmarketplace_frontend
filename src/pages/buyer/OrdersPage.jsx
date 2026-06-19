@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, Loader2, ChevronRight } from 'lucide-react';
+import { Package, Loader2, ChevronRight, RotateCcw } from 'lucide-react';
 import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { orderAPI } from '../../api';
+import { orderAPI, cartAPI } from '../../api';
 import { formatCurrency, formatDate, ORDER_STATUS_COLORS } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
 
@@ -13,7 +14,27 @@ export default function OrdersPage() {
   const [meta, setMeta] = useState({ total: 0, pages: 1, page: 1 });
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [reorderingId, setReorderingId] = useState(null);
   const navigate = useNavigate();
+
+  const handleReorder = async (order) => {
+    setReorderingId(order.id);
+    try {
+      for (const item of order.orderItems || []) {
+        await cartAPI.addItem({
+          productId: item.productId,
+          quantity: 1,
+          ...(item.selectedOptions ? { selectedOptions: item.selectedOptions } : {}),
+        });
+      }
+      toast({ title: 'Items added to cart' });
+      navigate('/cart');
+    } catch (err) {
+      toast({ title: 'Reorder failed', description: err.response?.data?.message, variant: 'destructive' });
+    } finally {
+      setReorderingId(null);
+    }
+  };
 
   const fetchOrders = async (page = 1) => {
     setIsLoading(true);
@@ -80,6 +101,18 @@ export default function OrdersPage() {
                       </span>
                       <p className="font-bold text-rosewood-600 mt-1">{formatCurrency(order.totalAmount)}</p>
                     </div>
+                    {['DELIVERED', 'CANCELLED'].includes(order.status) && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Reorder"
+                        disabled={reorderingId === order.id}
+                        onClick={(e) => { e.stopPropagation(); handleReorder(order); }}
+                      >
+                        {reorderingId === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                      </Button>
+                    )}
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </div>

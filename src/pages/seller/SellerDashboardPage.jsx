@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { DollarSign, ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Package, Loader2, RefreshCw } from 'lucide-react';
+import { DollarSign, ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Package, Loader2, RefreshCw, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { productAPI, transactionAPI } from '../../api';
@@ -12,6 +12,7 @@ import useNotificationStore from '../../store/notificationStore';
 export default function SellerDashboardPage() {
   const [stats, setStats] = useState(null);
   const [report, setReport] = useState(null);
+  const [dailyReport, setDailyReport] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -22,12 +23,14 @@ export default function SellerDashboardPage() {
     if (!silent) setIsLoading(true);
     else setIsRefreshing(true);
     try {
-      const [statsRes, reportRes] = await Promise.all([
+      const [statsRes, reportRes, dailyRes] = await Promise.all([
         productAPI.stats(),
         transactionAPI.salesReport({ period: 'monthly' }),
+        transactionAPI.salesReport({ period: '30d' }),
       ]);
       setStats(statsRes.data.data);
       setReport(reportRes.data.data);
+      setDailyReport(dailyRes.data.data);
       setLastUpdated(new Date());
     } catch {
       if (!silent) toast({ title: 'Failed to load dashboard', variant: 'destructive' });
@@ -77,6 +80,57 @@ export default function SellerDashboardPage() {
     { title: 'Monthly Revenue', value: formatCurrency(report?.totalRevenue || 0), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
+  // ---- This-month summary (defensive) ----
+  const monthRevenue = report?.summary?.totalRevenue ?? report?.totalRevenue ?? 0;
+  const monthOrders = report?.summary?.orderCount ?? report?.orderCount ?? 0;
+  const monthAvg = report?.summary?.avgOrderValue ?? report?.avgOrderValue ?? 0;
+  const monthCards = [
+    { title: 'Total Revenue (This Month)', value: formatCurrency(monthRevenue), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
+    { title: 'Orders (This Month)', value: monthOrders, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { title: 'Average Order Value', value: formatCurrency(monthAvg), icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
+  ];
+
+  // ---- Build per-day revenue for last 30 days ----
+  const dayBuckets = [];
+  const bucketIndex = {};
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    bucketIndex[key] = dayBuckets.length;
+    dayBuckets.push({ date: d, key, revenue: 0 });
+  }
+  const dailyTxns = dailyReport?.transactions ?? [];
+  dailyTxns.forEach((t) => {
+    if (!t?.createdAt) return;
+    const td = new Date(t.createdAt);
+    if (isNaN(td)) return;
+    td.setHours(0, 0, 0, 0);
+    const key = td.toISOString().slice(0, 10);
+    const idx = bucketIndex[key];
+    if (idx !== undefined) {
+      dayBuckets[idx].revenue += parseFloat(t.amount || t.totalAmount || 0) || 0;
+    }
+  });
+  const maxRevenue = dayBuckets.reduce((m, b) => Math.max(m, b.revenue), 0);
+  const totalDaily = dailyReport?.summary?.totalRevenue ?? dayBuckets.reduce((s, b) => s + b.revenue, 0);
+
+  // Chart geometry
+  const CHART_W = 600;
+  const CHART_H = 200;
+  const BASELINE = 190;
+  const TOP_PAD = 10;
+  const slot = CHART_W / 30;
+  const gap = slot * 0.2;
+  const barW = slot - gap;
+  const usableH = BASELINE - TOP_PAD;
+
+  // ---- Top products: top 5 by salesCount desc ----
+  const topProducts = [...(stats?.topProducts ?? [])]
+    .sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0))
+    .slice(0, 5);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-6">
       <div className="flex items-center justify-between mb-6">
@@ -121,6 +175,58 @@ export default function SellerDashboardPage() {
         ))}
       </div>
 
+      {/* This Month Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {monthCards.map(({ title, value, icon: Icon, color, bg }) => (
+          <Card key={title}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className={`h-5 w-5 ${color}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{title}</p>
+                  <p className="text-xl font-bold">{value}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Revenue Bar Chart (Last 30 Days) */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-rosewood-600" />
+            Revenue (Last 30 Days)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <svg viewBox="0 0 600 200" className="w-full h-auto" preserveAspectRatio="none" role="img" aria-label="Daily revenue for the last 30 days">
+            <g className="text-rosewood-500" fill="currentColor">
+              {dayBuckets.map((b, i) => {
+                const h = maxRevenue > 0 ? (b.revenue / maxRevenue) * usableH : 0;
+                const x = i * slot + gap / 2;
+                const y = BASELINE - h;
+                return (
+                  <rect key={b.key} x={x} y={y} width={barW} height={h}>
+                    <title>{`${b.key}: ${formatCurrency(b.revenue)}`}</title>
+                  </rect>
+                );
+              })}
+            </g>
+            <line x1="0" y1={BASELINE} x2={CHART_W} y2={BASELINE} stroke="#E5E7EB" strokeWidth="1" />
+          </svg>
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-sm font-medium">
+              Total: <span className="text-rosewood-600 font-bold">{formatCurrency(totalDaily)}</span>
+            </p>
+            <p className="text-xs text-muted-foreground">Daily revenue over the past 30 days</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Products */}
         <Card>
@@ -129,9 +235,9 @@ export default function SellerDashboardPage() {
             <Link to="/seller/products"><Button variant="ghost" size="sm">View all</Button></Link>
           </CardHeader>
           <CardContent>
-            {stats?.topProducts?.length > 0 ? (
+            {topProducts.length > 0 ? (
               <div className="space-y-3">
-                {stats.topProducts.map((p, idx) => (
+                {topProducts.map((p, idx) => (
                   <div key={p.id} className="flex items-center gap-3">
                     <span className="text-sm font-bold text-muted-foreground w-5">{idx + 1}</span>
                     <div className="w-8 h-8 rounded border bg-muted flex-shrink-0 overflow-hidden">
@@ -139,9 +245,11 @@ export default function SellerDashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium line-clamp-1">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.salesCount} sold</p>
+                      <p className="text-xs text-muted-foreground">{p.salesCount || 0} sold</p>
                     </div>
-                    <span className="text-sm font-bold text-rosewood-600">{formatCurrency(p.price)}</span>
+                    <span className="text-sm font-bold text-rosewood-600">
+                      {formatCurrency((p.salesCount || 0) * parseFloat(p.price || 0))}
+                    </span>
                   </div>
                 ))}
               </div>

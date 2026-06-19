@@ -1,9 +1,10 @@
 import { Banknote, CheckCircle, Clock } from 'lucide-react';
 
-export default function CashPaymentPanel({ transaction }) {
+export default function CashPaymentPanel({ transaction, amount: amountOverride }) {
   if (!transaction) return null;
 
-  const { paymentStatus, amount } = transaction;
+  const { paymentStatus } = transaction;
+  const amount = amountOverride ?? transaction.amount;
   const isApproved = paymentStatus === 'APPROVED' || paymentStatus === 'PAID';
 
   return (

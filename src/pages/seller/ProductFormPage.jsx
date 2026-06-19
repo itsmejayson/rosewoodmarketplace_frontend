@@ -3,13 +3,14 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Loader2, Upload, X, Star } from 'lucide-react';
+import { ArrowLeft, Loader2, Upload, X, Star, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { productAPI } from '../../api';
+import api from '../../api/axios';
 import { toast } from '../../components/ui/toast';
 
 const schema = z.object({
@@ -27,6 +28,10 @@ const schema = z.object({
   unit: z.string().optional(),
 });
 
+const emptyGroup = () => ({ name: '', required: false, maxSelect: 1, options: [] });
+const emptyOption = () => ({ name: '', priceModifier: 0 });
+const emptyAddon = () => ({ name: '', price: 0 });
+
 export default function ProductFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -42,6 +47,12 @@ export default function ProductFormPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [existingImages, setExistingImages] = useState([]);
   const [deletingImageId, setDeletingImageId] = useState(null);
+
+  // Variants & Add-ons
+  const [variantGroups, setVariantGroups] = useState([]);
+  const [addons, setAddons] = useState([]);
+  const [variantsOpen, setVariantsOpen] = useState(true);
+  const [addonsOpen, setAddonsOpen] = useState(true);
 
   const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm({
     resolver: zodResolver(schema),
@@ -81,6 +92,13 @@ export default function ProductFormPage() {
         });
         setSelectedCategoryId(p.categoryId || '');
         setExistingImages(p.images || []);
+        if (p.variantGroups?.length) setVariantGroups(p.variantGroups.map(g => ({
+          name: g.name,
+          required: g.required,
+          maxSelect: g.maxSelect,
+          options: g.options.map(o => ({ name: o.name, priceModifier: parseFloat(o.priceModifier) })),
+        })));
+        if (p.addons?.length) setAddons(p.addons.map(a => ({ name: a.name, price: parseFloat(a.price) })));
       })
       .catch(() => toast({ title: 'Failed to load product', variant: 'destructive' }))
       .finally(() => setIsFetching(false));
@@ -98,6 +116,19 @@ export default function ProductFormPage() {
       setDeletingImageId(null);
     }
   };
+
+  // Variant group helpers
+  const addGroup = () => setVariantGroups(prev => [...prev, emptyGroup()]);
+  const removeGroup = (gi) => setVariantGroups(prev => prev.filter((_, i) => i !== gi));
+  const updateGroup = (gi, field, val) => setVariantGroups(prev => prev.map((g, i) => i === gi ? { ...g, [field]: val } : g));
+  const addOption = (gi) => setVariantGroups(prev => prev.map((g, i) => i === gi ? { ...g, options: [...g.options, emptyOption()] } : g));
+  const removeOption = (gi, oi) => setVariantGroups(prev => prev.map((g, i) => i === gi ? { ...g, options: g.options.filter((_, j) => j !== oi) } : g));
+  const updateOption = (gi, oi, field, val) => setVariantGroups(prev => prev.map((g, i) => i === gi ? { ...g, options: g.options.map((o, j) => j === oi ? { ...o, [field]: val } : o) } : g));
+
+  // Addon helpers
+  const addAddon = () => setAddons(prev => [...prev, emptyAddon()]);
+  const removeAddon = (i) => setAddons(prev => prev.filter((_, j) => j !== i));
+  const updateAddon = (i, field, val) => setAddons(prev => prev.map((a, j) => j === i ? { ...a, [field]: val } : a));
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -136,6 +167,15 @@ export default function ProductFormPage() {
           }
         }
       }
+
+      // Save variants and addons
+      try {
+        await api.put(`/products/${productId}/variants`, { groups: variantGroups });
+        await api.put(`/products/${productId}/addons`, { addons });
+      } catch {
+        toast({ title: 'Product saved but variants/addons save failed', variant: 'destructive' });
+      }
+
       navigate('/seller/products');
     } catch (err) {
       toast({ title: 'Failed to save product', description: err.response?.data?.message, variant: 'destructive' });
@@ -194,6 +234,7 @@ export default function ProductFormPage() {
                 <Label>Price (₱)</Label>
                 <Input type="number" step="0.01" min="0" placeholder="0.00" {...register('price')} />
                 {errors.price && <p className="text-xs text-destructive">{errors.price.message}</p>}
+                <p className="text-xs text-muted-foreground">Used as the display price. If you add variant groups below, the lowest variant price will be shown instead.</p>
               </div>
               <div className="space-y-1">
                 <Label>Stock Quantity</Label>
@@ -258,6 +299,154 @@ export default function ProductFormPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Variant Groups */}
+        <Card>
+          <CardHeader>
+            <button
+              type="button"
+              className="flex items-center justify-between w-full"
+              onClick={() => setVariantsOpen(o => !o)}
+            >
+              <CardTitle className="text-base">Variant Groups</CardTitle>
+              {variantsOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            <p className="text-xs text-muted-foreground mt-1">e.g. Size, Flavor, Temperature — buyers must choose one per required group</p>
+            <div className="mt-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+              <strong>Pricing tip:</strong> Each option's price is its <strong>full selling price</strong> (e.g. Small = ₱30, Medium = ₱60). The <strong>lowest price</strong> among all options will be displayed on the product card in the marketplace.
+            </div>
+          </CardHeader>
+          {variantsOpen && (
+            <CardContent className="space-y-4">
+              {variantGroups.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-2">No variant groups yet. Add one below.</p>
+              )}
+              {variantGroups.map((group, gi) => (
+                <div key={gi} className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Group name (e.g. Size)"
+                      value={group.name}
+                      onChange={e => updateGroup(gi, 'name', e.target.value)}
+                      className="flex-1"
+                    />
+                    <button type="button" onClick={() => removeGroup(gi)} className="text-destructive hover:opacity-70">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={group.required}
+                        onChange={e => updateGroup(gi, 'required', e.target.checked)}
+                        className="rounded"
+                      />
+                      Required
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      <span className="text-muted-foreground">Max selections:</span>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={group.maxSelect}
+                        onChange={e => updateGroup(gi, 'maxSelect', parseInt(e.target.value) || 1)}
+                        className="w-16 h-7 text-center"
+                      />
+                    </label>
+                  </div>
+                  <div className="space-y-2">
+                    {group.options.map((opt, oi) => (
+                      <div key={oi} className="flex items-center gap-2">
+                        <Input
+                          placeholder="Option name (e.g. Large)"
+                          value={opt.name}
+                          onChange={e => updateOption(gi, oi, 'name', e.target.value)}
+                          className="flex-1"
+                        />
+                        <div className="flex items-center border rounded-md overflow-hidden">
+                          <span className="px-2 text-sm text-muted-foreground bg-muted border-r">₱</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0"
+                            value={opt.priceModifier}
+                            onChange={e => updateOption(gi, oi, 'priceModifier', parseFloat(e.target.value) || 0)}
+                            className="w-20 px-2 py-1.5 text-sm bg-background focus:outline-none"
+                          />
+                        </div>
+                        <button type="button" onClick={() => removeOption(gi, oi)} className="text-muted-foreground hover:text-destructive">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => addOption(gi)}
+                      className="flex items-center gap-1 text-sm text-rosewood-600 hover:opacity-70"
+                    >
+                      <Plus className="h-3 w-3" /> Add option
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={addGroup} className="w-full">
+                <Plus className="h-4 w-4 mr-1" /> Add Variant Group
+              </Button>
+            </CardContent>
+          )}
+        </Card>
+
+        {/* Add-ons */}
+        <Card>
+          <CardHeader>
+            <button
+              type="button"
+              className="flex items-center justify-between w-full"
+              onClick={() => setAddonsOpen(o => !o)}
+            >
+              <CardTitle className="text-base">Add-ons</CardTitle>
+              {addonsOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+            </button>
+            <p className="text-xs text-muted-foreground mt-1">Optional extras buyers can add (e.g. Extra Pearls, Whipped Cream)</p>
+          </CardHeader>
+          {addonsOpen && (
+            <CardContent className="space-y-3">
+              {addons.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-2">No add-ons yet. Add one below.</p>
+              )}
+              {addons.map((addon, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    placeholder="Add-on name (e.g. Extra Pearls)"
+                    value={addon.name}
+                    onChange={e => updateAddon(i, 'name', e.target.value)}
+                    className="flex-1"
+                  />
+                  <div className="flex items-center border rounded-md overflow-hidden">
+                    <span className="px-2 text-sm text-muted-foreground bg-muted border-r">₱</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0"
+                      value={addon.price}
+                      onChange={e => updateAddon(i, 'price', parseFloat(e.target.value) || 0)}
+                      className="w-20 px-2 py-1.5 text-sm bg-background focus:outline-none"
+                    />
+                  </div>
+                  <button type="button" onClick={() => removeAddon(i)} className="text-destructive hover:opacity-70">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={addAddon} className="w-full">
+                <Plus className="h-4 w-4 mr-1" /> Add Add-on
+              </Button>
+            </CardContent>
+          )}
+        </Card>
 
         {/* Images */}
         <Card>

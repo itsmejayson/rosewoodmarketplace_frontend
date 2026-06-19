@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Store, Loader2, ShoppingCart, Package } from 'lucide-react';
+import { Store, Loader2, ShoppingCart, Package, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -34,6 +34,7 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get('role') === 'SELLER' ? 'SELLER' : 'BUYER';
   const [role, setRole] = useState(defaultRole);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -99,7 +100,12 @@ export default function RegisterPage() {
 
             <div className="space-y-1">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Min. 8 characters" {...register('password')} />
+              <div className="relative">
+                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Min. 8 characters" {...register('password')} className="pr-10" />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
             </div>
 

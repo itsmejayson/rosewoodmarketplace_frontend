@@ -6,7 +6,7 @@ export function cn(...inputs) {
 }
 
 export const formatCurrency = (amount) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
+  '₱' + Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const formatDate = (date) =>
   new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date));

@@ -3,6 +3,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription, ToastClose, useToast } from '../ui/toast';
 import { useSocket } from '../../hooks/useSocket';
+import PushNotificationBanner from '../PushNotificationBanner';
 
 function Toaster() {
   const { toasts } = useToast();
@@ -37,6 +38,7 @@ export default function MainLayout() {
         </main>
         <Footer />
       </div>
+      <PushNotificationBanner />
       <Toaster />
       <ToastViewport />
     </ToastProvider>

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Lock, Camera, Loader2, Store } from 'lucide-react';
+import { User, Lock, Camera, Loader2, Store, Bell, Eye, EyeOff } from 'lucide-react';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -32,6 +33,10 @@ export default function ProfilePage() {
   const [profileMsg, setProfileMsg] = useState(null);
   const [passwordMsg, setPasswordMsg] = useState(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const { permission, isSubscribed, isLoading: pushLoading, requestPermissionAndSubscribe, unsubscribe } = usePushNotifications();
 
   const profileForm = useForm({
     resolver: zodResolver(profileSchema),
@@ -164,6 +169,32 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+      {/* Push Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><Bell className="h-4 w-4" /> Push Notifications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {permission === 'denied' ? (
+            <p className="text-sm text-muted-foreground">Push notifications are blocked in your browser settings. Enable them in your browser site settings to receive notifications.</p>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">{isSubscribed ? 'Notifications enabled' : 'Notifications disabled'}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Receive order updates, payment confirmations, and messages.</p>
+              </div>
+              <button
+                onClick={isSubscribed ? unsubscribe : requestPermissionAndSubscribe}
+                disabled={pushLoading}
+                className={`text-sm px-4 py-1.5 rounded-md font-medium disabled:opacity-50 ${isSubscribed ? 'border hover:bg-muted' : 'bg-rosewood-600 text-white hover:bg-rosewood-700'}`}
+              >
+                {pushLoading ? '…' : isSubscribed ? 'Disable' : 'Enable'}
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Change Password */}
       <Card>
         <CardHeader>
@@ -173,21 +204,36 @@ export default function ProfilePage() {
           <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
             <div className="space-y-1">
               <Label>Current Password</Label>
-              <Input type="password" {...passwordForm.register('currentPassword')} />
+              <div className="relative">
+                <Input type={showCurrent ? 'text' : 'password'} {...passwordForm.register('currentPassword')} className="pr-10" />
+                <button type="button" onClick={() => setShowCurrent(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordForm.formState.errors.currentPassword && (
                 <p className="text-xs text-destructive">{passwordForm.formState.errors.currentPassword.message}</p>
               )}
             </div>
             <div className="space-y-1">
               <Label>New Password</Label>
-              <Input type="password" {...passwordForm.register('newPassword')} />
+              <div className="relative">
+                <Input type={showNew ? 'text' : 'password'} {...passwordForm.register('newPassword')} className="pr-10" />
+                <button type="button" onClick={() => setShowNew(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordForm.formState.errors.newPassword && (
                 <p className="text-xs text-destructive">{passwordForm.formState.errors.newPassword.message}</p>
               )}
             </div>
             <div className="space-y-1">
               <Label>Confirm New Password</Label>
-              <Input type="password" {...passwordForm.register('confirmPassword')} />
+              <div className="relative">
+                <Input type={showConfirm ? 'text' : 'password'} {...passwordForm.register('confirmPassword')} className="pr-10" />
+                <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordForm.formState.errors.confirmPassword && (
                 <p className="text-xs text-destructive">{passwordForm.formState.errors.confirmPassword.message}</p>
               )}
