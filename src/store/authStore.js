@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { authAPI } from '../api';
+import safeStorage from '../lib/safeStorage';
 
 const useAuthStore = create(
   persist(
@@ -16,8 +17,8 @@ const useAuthStore = create(
         try {
           const { data } = await authAPI.login(credentials);
           const { user, accessToken, refreshToken } = data.data;
-          localStorage.setItem('accessToken', accessToken);
-          localStorage.setItem('refreshToken', refreshToken);
+          safeStorage.setItem('accessToken', accessToken);
+          safeStorage.setItem('refreshToken', refreshToken);
           set({ user, accessToken, refreshToken, isLoading: false });
           return { success: true };
         } catch (err) {
@@ -32,8 +33,8 @@ const useAuthStore = create(
         try {
           const { data } = await authAPI.register(userData);
           const { user, accessToken, refreshToken } = data.data;
-          localStorage.setItem('accessToken', accessToken);
-          localStorage.setItem('refreshToken', refreshToken);
+          safeStorage.setItem('accessToken', accessToken);
+          safeStorage.setItem('refreshToken', refreshToken);
           set({ user, accessToken, refreshToken, isLoading: false });
           return { success: true };
         } catch (err) {
@@ -44,8 +45,8 @@ const useAuthStore = create(
       },
 
       logout: () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        safeStorage.removeItem('accessToken');
+        safeStorage.removeItem('refreshToken');
         set({ user: null, accessToken: null, refreshToken: null });
       },
 
@@ -64,6 +65,7 @@ const useAuthStore = create(
     }),
     {
       name: 'auth-storage',
+      storage: createJSONStorage(() => safeStorage),
       partialize: (state) => ({ user: state.user, accessToken: state.accessToken, refreshToken: state.refreshToken }),
     }
   )

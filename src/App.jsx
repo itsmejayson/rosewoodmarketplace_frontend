@@ -4,6 +4,7 @@ import MainLayout from './components/layout/MainLayout';
 import useAuthStore from './store/authStore';
 import useCartStore from './store/cartStore';
 import useNotificationStore from './store/notificationStore';
+import safeStorage from './lib/safeStorage';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -58,7 +59,7 @@ export default function App() {
   const fetchNotifications = useNotificationStore((s) => s.fetch);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = safeStorage.getItem('accessToken');
     if (token && !user) fetchMe();
   }, []);
 

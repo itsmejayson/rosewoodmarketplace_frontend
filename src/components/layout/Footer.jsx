@@ -36,7 +36,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t pt-4 text-center text-xs text-muted-foreground">
-          Â© {new Date().getFullYear()} RP Market. All rights reserved.
+          &copy; {new Date().getFullYear()} RP Market. All rights reserved.
         </div>
       </div>
     </footer>

@@ -4,10 +4,9 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 
 export default function PushNotificationBanner() {
   const [dismissed, setDismissed] = useState(false);
-  const { permission, isSubscribed, isLoading, requestPermissionAndSubscribe } = usePushNotifications();
+  const { permission, isSubscribed, isLoading, isPushSupported, requestPermissionAndSubscribe } = usePushNotifications();
 
-  // Don't show if: already granted, already denied, dismissed this session, or not supported
-  if (typeof Notification === 'undefined') return null;
+  if (!isPushSupported) return null;
   if (permission === 'granted' && isSubscribed) return null;
   if (permission === 'denied') return null;
   if (dismissed) return null;

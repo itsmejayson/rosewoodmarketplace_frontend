@@ -3,6 +3,13 @@ import api from '../api/axios';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 
+// Push notifications are not supported in all browsers (Messenger, Safari < 16.4, etc.)
+const isPushSupported =
+  typeof window !== 'undefined' &&
+  'Notification' in window &&
+  'serviceWorker' in navigator &&
+  'PushManager' in window;
+
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -11,16 +18,19 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export function usePushNotifications() {
-  const [permission, setPermission] = useState(Notification.permission);
+  const [permission, setPermission] = useState(
+    isPushSupported ? Notification.permission : 'denied'
+  );
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (!isPushSupported) return;
     checkSubscription();
   }, []);
 
   const checkSubscription = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (!isPushSupported) return;
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
@@ -29,7 +39,7 @@ export function usePushNotifications() {
   };
 
   const subscribe = async () => {
-    if (!VAPID_PUBLIC_KEY) return;
+    if (!isPushSupported || !VAPID_PUBLIC_KEY) return;
     setIsLoading(true);
     try {
       const reg = await navigator.serviceWorker.ready;
@@ -48,6 +58,7 @@ export function usePushNotifications() {
   };
 
   const unsubscribe = async () => {
+    if (!isPushSupported) return;
     setIsLoading(true);
     try {
       const reg = await navigator.serviceWorker.ready;
@@ -65,10 +76,13 @@ export function usePushNotifications() {
   };
 
   const requestPermissionAndSubscribe = async () => {
-    const perm = await Notification.requestPermission();
-    setPermission(perm);
-    if (perm === 'granted') await subscribe();
+    if (!isPushSupported) return;
+    try {
+      const perm = await Notification.requestPermission();
+      setPermission(perm);
+      if (perm === 'granted') await subscribe();
+    } catch {}
   };
 
-  return { permission, isSubscribed, isLoading, subscribe, unsubscribe, requestPermissionAndSubscribe };
+  return { permission, isSubscribed, isLoading, isPushSupported, subscribe, unsubscribe, requestPermissionAndSubscribe };
 }
