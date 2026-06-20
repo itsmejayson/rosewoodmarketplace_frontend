@@ -10,7 +10,7 @@ import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import useCartStore from '../../store/cartStore';
 import { orderAPI, addressAPI, storeAPI } from '../../api';
-import { formatCurrency, formatDate } from '../../lib/utils';
+import { formatCurrency } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
 
 const deliverySchema = z.object({
@@ -44,37 +44,42 @@ const FULFILLMENT_TYPES = [
   {
     id: 'DELIVERY',
     label: 'Delivery',
-    description: 'Seller delivers to your address. A delivery fee may be added by the seller before you pay.',
+    description: 'Seller delivers to your address.',
     icon: Truck,
   },
   {
     id: 'PICKUP',
     label: 'Pick Up',
-    description: 'You pick up from the seller\'s store. Pay right away — no waiting for confirmation.',
+    description: "You pick up from the seller's store. Pay right away — no waiting for confirmation.",
     icon: Store,
   },
 ];
+
+function resolveUnitPrice(item) {
+  return item.selectedOptions?.unitPrice != null
+    ? parseFloat(item.selectedOptions.unitPrice)
+    : parseFloat(item.product.price);
+}
 
 export default function CheckoutPage() {
   const { cart, fetchCart } = useCartStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const sellerId = location.state?.sellerId ?? null;
+
+  // Support both old single sellerId and new sellerIds array
+  const sellerIds = location.state?.sellerIds
+    ?? (location.state?.sellerId ? [location.state.sellerId] : []);
+
   const [paymentMethod, setPaymentMethod] = useState('GCASH');
   const [fulfillmentType, setFulfillmentType] = useState('DELIVERY');
-
-  const availablePaymentMethods = ALL_PAYMENT_METHODS;
-
-  const handleFulfillmentChange = (type) => {
-    setFulfillmentType(type);
-  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingData, setPendingData] = useState(null);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  // Map of sellerId -> { defaultDeliveryFee, freeDeliveryThreshold, storeName }
+  const [sellerInfoMap, setSellerInfoMap] = useState({});
 
   const isPickup = fulfillmentType === 'PICKUP';
-  const [savedAddresses, setSavedAddresses] = useState([]);
-  const [sellerDelivery, setSellerDelivery] = useState({ defaultDeliveryFee: 0, freeDeliveryThreshold: null });
 
   useEffect(() => { fetchCart(); }, []);
   useEffect(() => {
@@ -83,17 +88,22 @@ export default function CheckoutPage() {
       .catch(() => {});
   }, []);
   useEffect(() => {
-    if (!sellerId) return;
-    storeAPI.get(sellerId)
-      .then(({ data }) => {
-        const s = data.data?.seller;
-        setSellerDelivery({
-          defaultDeliveryFee: parseFloat(s?.defaultDeliveryFee || 0),
-          freeDeliveryThreshold: s?.freeDeliveryThreshold ? parseFloat(s.freeDeliveryThreshold) : null,
-        });
-      })
-      .catch(() => {});
-  }, [sellerId]);
+    if (!sellerIds.length) return;
+    Promise.all(
+      sellerIds.map((sid) =>
+        storeAPI.get(sid)
+          .then(({ data }) => {
+            const s = data.data?.seller;
+            return [sid, {
+              storeName: s?.storeName || s?.fullName || 'Unknown Store',
+              defaultDeliveryFee: parseFloat(s?.defaultDeliveryFee || 0),
+              freeDeliveryThreshold: s?.freeDeliveryThreshold ? parseFloat(s.freeDeliveryThreshold) : null,
+            }];
+          })
+          .catch(() => [sid, { storeName: 'Unknown Store', defaultDeliveryFee: 0, freeDeliveryThreshold: null }])
+      )
+    ).then((entries) => setSellerInfoMap(Object.fromEntries(entries)));
+  }, [sellerIds.join(',')]);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(isPickup ? pickupSchema : deliverySchema),
@@ -111,31 +121,29 @@ export default function CheckoutPage() {
     setValue('shippingCountry', a.country || '');
   };
 
-  // Filter to the specific store being checked out (or all items if no sellerId)
-  const checkoutItems = sellerId
-    ? (cart?.cartItems ?? []).filter((i) => i.product.seller?.id === sellerId)
-    : (cart?.cartItems ?? []);
+  // Items from selected sellers, grouped by seller
+  const checkoutItems = (cart?.cartItems ?? []).filter((i) =>
+    sellerIds.includes(i.product.seller?.id)
+  );
 
-  const storeName = checkoutItems[0]?.product?.seller?.storeName
-    || checkoutItems[0]?.product?.seller?.fullName
-    || null;
+  // Per-store groups for display
+  const storeGroups = sellerIds.map((sid) => {
+    const items = checkoutItems.filter((i) => i.product.seller?.id === sid);
+    const info = sellerInfoMap[sid] ?? { storeName: 'Unknown Store', defaultDeliveryFee: 0, freeDeliveryThreshold: null };
+    const subtotal = items.reduce((s, i) => s + resolveUnitPrice(i) * i.quantity, 0);
+    const deliveryFee = isPickup ? 0 : (
+      info.freeDeliveryThreshold !== null && subtotal >= info.freeDeliveryThreshold
+        ? 0
+        : info.defaultDeliveryFee
+    );
+    const isFreeDelivery = !isPickup && info.freeDeliveryThreshold !== null && subtotal >= info.freeDeliveryThreshold;
+    return { sellerId: sid, items, info, subtotal, deliveryFee, isFreeDelivery };
+  }).filter((g) => g.items.length > 0);
 
-  const subtotal = checkoutItems.reduce((sum, i) => {
-    const price = i.selectedOptions?.unitPrice != null
-      ? parseFloat(i.selectedOptions.unitPrice)
-      : parseFloat(i.product.price);
-    return sum + price * i.quantity;
-  }, 0);
-
-  // Compute delivery fee preview (mirrors backend logic)
-  const computedDeliveryFee = (() => {
-    if (isPickup) return 0;
-    const { defaultDeliveryFee, freeDeliveryThreshold } = sellerDelivery;
-    if (freeDeliveryThreshold !== null && subtotal >= freeDeliveryThreshold) return 0;
-    return defaultDeliveryFee;
-  })();
-  const isFreeDelivery = !isPickup && sellerDelivery.freeDeliveryThreshold !== null && subtotal >= sellerDelivery.freeDeliveryThreshold;
-  const total = subtotal + (isPickup ? 0 : computedDeliveryFee);
+  const grandSubtotal = storeGroups.reduce((s, g) => s + g.subtotal, 0);
+  const grandDeliveryFee = storeGroups.reduce((s, g) => s + g.deliveryFee, 0);
+  const grandTotal = grandSubtotal + (isPickup ? 0 : grandDeliveryFee);
+  const totalItemCount = checkoutItems.reduce((s, i) => s + i.quantity, 0);
 
   const onSubmit = (data) => {
     if (!checkoutItems.length) {
@@ -150,21 +158,29 @@ export default function CheckoutPage() {
     setShowConfirm(false);
     setIsSubmitting(true);
     try {
-      const { data: res } = await orderAPI.checkout({
-        ...pendingData,
-        paymentMethod,
-        fulfillmentType,
-        ...(sellerId ? { sellerId } : {}),
-      });
-      const { order } = res.data;
+      const results = [];
+      for (const group of storeGroups) {
+        const { data: res } = await orderAPI.checkout({
+          ...pendingData,
+          paymentMethod,
+          fulfillmentType,
+          sellerId: group.sellerId,
+        });
+        results.push(res.data.order);
+      }
       toast({
-        title: 'Order placed!',
-        description: isPickup
-          ? `Order #${order.orderNumber} — you can pay now.`
-          : `Order #${order.orderNumber} — waiting for seller to confirm.`,
+        title: results.length > 1 ? `${results.length} orders placed!` : 'Order placed!',
+        description: results.length > 1
+          ? `Order numbers: ${results.map((o) => o.orderNumber).join(', ')}`
+          : `Order #${results[0].orderNumber}`,
       });
       await fetchCart();
-      navigate(`/orders/${order.id}`, { state: { justPlaced: true } });
+      // Navigate to orders list when multiple orders, detail when single
+      if (results.length === 1) {
+        navigate(`/orders/${results[0].id}`, { state: { justPlaced: true } });
+      } else {
+        navigate('/orders', { state: { justPlaced: true } });
+      }
     } catch (err) {
       toast({
         title: 'Checkout failed',
@@ -186,50 +202,68 @@ export default function CheckoutPage() {
     );
   }
 
-  const FulfillIcon = fulfillmentType === 'PICKUP' ? Store : Truck;
+  const FulfillIcon = isPickup ? Store : Truck;
   const PayIcon = paymentMethod === 'GCASH' ? Smartphone : Banknote;
 
   return (
     <>
-    {/* Order Confirmation Modal */}
+    {/* Confirmation Modal */}
     {showConfirm && (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
         <div className="bg-background rounded-xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh]">
           <div className="flex items-center justify-between p-4 border-b">
-            <h3 className="font-semibold text-base">Confirm Your Order</h3>
+            <h3 className="font-semibold text-base">Confirm Your Order{storeGroups.length > 1 ? 's' : ''}</h3>
             <button onClick={() => setShowConfirm(false)} className="text-muted-foreground hover:text-foreground">
               <X className="h-5 w-5" />
             </button>
           </div>
 
           <div className="overflow-y-auto flex-1 p-4 space-y-4">
-            {/* Store label */}
-            {storeName && (
-              <div className="flex items-center gap-1.5 text-sm font-medium text-rosewood-700">
-                <Store className="h-4 w-4" /> {storeName}
+            {storeGroups.length > 1 && (
+              <div className="flex items-start gap-2 p-2 bg-amber-50 rounded-lg text-xs text-amber-800">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>{storeGroups.length} separate orders will be created — one per store.</span>
               </div>
             )}
-            {/* Items */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Items</p>
-              <div className="space-y-2">
-                {checkoutItems.map((item) => (
-                  <div key={item.id} className="flex justify-between items-start text-sm">
-                    <div className="flex-1 mr-2">
-                      <p className="font-medium line-clamp-1">{item.product.name}</p>
-                      {item.selectedOptions?.variants?.length > 0 && (
-                        <p className="text-xs text-muted-foreground">{item.selectedOptions.variants.map(v => v.optionName).join(', ')}</p>
-                      )}
-                      {item.selectedOptions?.addons?.length > 0 && (
-                        <p className="text-xs text-muted-foreground">+ {item.selectedOptions.addons.map(a => a.name).join(', ')}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">× {item.quantity}</p>
+
+            {storeGroups.map((group) => (
+              <div key={group.sellerId} className="space-y-2">
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-rosewood-700">
+                  <Store className="h-4 w-4" /> {group.info.storeName}
+                </div>
+                <div className="space-y-1 pl-5">
+                  {group.items.map((item) => (
+                    <div key={item.id} className="flex justify-between items-start text-sm">
+                      <div className="flex-1 mr-2">
+                        <p className="font-medium line-clamp-1">{item.product.name}</p>
+                        {item.selectedOptions?.variants?.length > 0 && (
+                          <p className="text-xs text-muted-foreground">{item.selectedOptions.variants.map((v) => v.optionName).join(', ')}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">× {item.quantity}</p>
+                      </div>
+                      <span className="font-medium text-rosewood-600 flex-shrink-0">
+                        {formatCurrency(resolveUnitPrice(item) * item.quantity)}
+                      </span>
                     </div>
-                    <span className="font-medium text-rosewood-600 flex-shrink-0">{formatCurrency((item.selectedOptions?.unitPrice ?? parseFloat(item.product.price)) * item.quantity)}</span>
+                  ))}
+                </div>
+                <div className="pl-5 space-y-0.5 text-xs text-muted-foreground">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span><span>{formatCurrency(group.subtotal)}</span>
                   </div>
-                ))}
+                  {!isPickup && (
+                    <div className="flex justify-between">
+                      <span>Delivery fee</span>
+                      {group.isFreeDelivery
+                        ? <span className="text-green-600 font-medium">Free</span>
+                        : <span>{group.deliveryFee > 0 ? formatCurrency(group.deliveryFee) : '—'}</span>
+                      }
+                    </div>
+                  )}
+                </div>
+                {storeGroups.length > 1 && <div className="border-t" />}
               </div>
-            </div>
+            ))}
 
             {/* Fulfillment & Payment */}
             <div className="grid grid-cols-2 gap-3">
@@ -237,7 +271,7 @@ export default function CheckoutPage() {
                 <p className="text-xs text-muted-foreground mb-1">Fulfillment</p>
                 <div className="flex items-center gap-1.5">
                   <FulfillIcon className="h-4 w-4 text-rosewood-600" />
-                  <span className="text-sm font-medium">{fulfillmentType === 'PICKUP' ? 'Pick Up' : 'Delivery'}</span>
+                  <span className="text-sm font-medium">{isPickup ? 'Pick Up' : 'Delivery'}</span>
                 </div>
               </div>
               <div className="bg-muted/50 rounded-lg p-3">
@@ -249,24 +283,23 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Total */}
-            <div className="border-t pt-3 space-y-1.5">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Subtotal</span>
-                <span>{formatCurrency(subtotal)}</span>
-              </div>
-              {!isPickup && (
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Delivery fee</span>
-                  {isFreeDelivery
-                    ? <span className="text-green-600 font-medium">Free</span>
-                    : <span>{computedDeliveryFee > 0 ? formatCurrency(computedDeliveryFee) : '—'}</span>
-                  }
+            {/* Grand Total */}
+            <div className="border-t pt-3 space-y-1.5 text-sm">
+              {storeGroups.length > 1 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Combined subtotal</span>
+                  <span>{formatCurrency(grandSubtotal)}</span>
+                </div>
+              )}
+              {!isPickup && grandDeliveryFee >= 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Total delivery fees</span>
+                  <span>{grandDeliveryFee > 0 ? formatCurrency(grandDeliveryFee) : 'Free'}</span>
                 </div>
               )}
               <div className="flex justify-between items-center pt-1 border-t">
-                <span className="font-semibold">Total</span>
-                <span className="text-xl font-bold text-rosewood-600">{formatCurrency(total)}</span>
+                <span className="font-semibold">Grand Total</span>
+                <span className="text-xl font-bold text-rosewood-600">{formatCurrency(grandTotal)}</span>
               </div>
             </div>
           </div>
@@ -284,7 +317,7 @@ export default function CheckoutPage() {
               disabled={isSubmitting}
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm Order
+              Confirm {storeGroups.length > 1 ? `${storeGroups.length} Orders` : 'Order'}
             </Button>
           </div>
         </div>
@@ -306,7 +339,7 @@ export default function CheckoutPage() {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => handleFulfillmentChange(id)}
+                    onClick={() => setFulfillmentType(id)}
                     className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       fulfillmentType === id
                         ? 'border-rosewood-500 bg-rosewood-50'
@@ -334,7 +367,7 @@ export default function CheckoutPage() {
             <Card>
               <CardHeader><CardTitle className="text-base">Payment Method</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                {availablePaymentMethods.map(({ id, label, description, icon: Icon }) => (
+                {ALL_PAYMENT_METHODS.map(({ id, label, description, icon: Icon }) => (
                   <button
                     key={id}
                     type="button"
@@ -362,7 +395,7 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
-            {/* Shipping Info — only for DELIVERY */}
+            {/* Delivery Address */}
             {!isPickup && (
               <Card>
                 <CardHeader><CardTitle className="text-base">Delivery Address</CardTitle></CardHeader>
@@ -417,7 +450,6 @@ export default function CheckoutPage() {
               </Card>
             )}
 
-            {/* Pickup notes */}
             {isPickup && (
               <Card>
                 <CardHeader><CardTitle className="text-base">Pickup Notes (optional)</CardTitle></CardHeader>
@@ -432,71 +464,82 @@ export default function CheckoutPage() {
           <div>
             <Card className="sticky top-20">
               <CardHeader>
-                <CardTitle className="text-base">Order Summary</CardTitle>
-                {storeName && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <Store className="h-3 w-3" /> {storeName}
-                  </p>
-                )}
+                <CardTitle className="text-base">
+                  Order Summary
+                  {storeGroups.length > 1 && (
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">({storeGroups.length} stores)</span>
+                  )}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-                  {checkoutItems.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground line-clamp-1 flex-1 mr-2">
-                        {item.product.name} × {item.quantity}
-                      </span>
-                      <span className="font-medium flex-shrink-0">
-                        {formatCurrency((item.selectedOptions?.unitPrice ?? parseFloat(item.product.price)) * item.quantity)}
-                      </span>
+              <CardContent className="space-y-4">
+                {/* Per-store breakdown */}
+                {storeGroups.map((group, idx) => (
+                  <div key={group.sellerId} className={idx > 0 ? 'pt-3 border-t' : ''}>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Store className="h-3.5 w-3.5 text-rosewood-600 flex-shrink-0" />
+                      <span className="text-sm font-semibold truncate">{group.info.storeName}</span>
                     </div>
-                  ))}
-                </div>
-                <div className="border-t pt-3 space-y-2 text-sm">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span>{formatCurrency(subtotal)}</span>
-                  </div>
-                  {!isPickup && (
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Delivery fee</span>
-                      {isFreeDelivery ? (
-                        <span className="text-green-600 font-medium">Free</span>
-                      ) : computedDeliveryFee > 0 ? (
-                        <span>{formatCurrency(computedDeliveryFee)}</span>
-                      ) : (
-                        <span>—</span>
+                    <div className="space-y-1 mb-2">
+                      {group.items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-xs text-muted-foreground">
+                          <span className="line-clamp-1 flex-1 mr-2">{item.product.name} × {item.quantity}</span>
+                          <span className="flex-shrink-0">{formatCurrency(resolveUnitPrice(item) * item.quantity)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-0.5 text-xs">
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>Subtotal</span><span>{formatCurrency(group.subtotal)}</span>
+                      </div>
+                      {!isPickup && (
+                        <div className="flex justify-between text-muted-foreground">
+                          <span>Delivery fee</span>
+                          {group.isFreeDelivery
+                            ? <span className="text-green-600 font-medium">Free</span>
+                            : <span>{group.deliveryFee > 0 ? formatCurrency(group.deliveryFee) : '—'}</span>
+                          }
+                        </div>
                       )}
                     </div>
+                  </div>
+                ))}
+
+                {/* Grand total */}
+                <div className="border-t pt-3 space-y-1 text-sm">
+                  {storeGroups.length > 1 && !isPickup && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Total delivery fees</span>
+                      <span>{grandDeliveryFee > 0 ? formatCurrency(grandDeliveryFee) : 'Free'}</span>
+                    </div>
                   )}
-                  {!isPickup && isFreeDelivery && (
-                    <p className="text-xs text-green-700 bg-green-50 rounded px-2 py-1">
-                      🎉 You qualify for free delivery!
+                  <div className="flex justify-between font-bold text-base">
+                    <span>Total ({totalItemCount} item{totalItemCount !== 1 ? 's' : ''})</span>
+                    <span className="text-rosewood-600">{formatCurrency(grandTotal)}</span>
+                  </div>
+                  {storeGroups.length > 1 && (
+                    <p className="text-xs text-muted-foreground">
+                      {storeGroups.length} separate orders will be created — one per store.
                     </p>
                   )}
-                  <div className="flex justify-between font-bold text-base border-t pt-2">
-                    <span>Total</span>
-                    <span className="text-rosewood-600">{formatCurrency(total)}</span>
-                  </div>
                 </div>
 
-                <div className={`mt-4 rounded-lg p-3 text-xs ${isPickup ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
+                <div className={`rounded-lg p-3 text-xs ${isPickup ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
                   {isPickup
-                    ? <p>🏪 You'll be able to pay <strong>immediately</strong> after placing your order — no waiting required.</p>
+                    ? <p>🏪 You'll be able to pay <strong>immediately</strong> after placing your order.</p>
                     : paymentMethod === 'GCASH'
-                      ? <p>📱 After placing your order, upload your GCash receipt to complete payment. You have <strong>5 minutes</strong> to submit.</p>
-                      : <p>💵 Your order will be processed for delivery. Pay cash upon delivery.</p>
+                      ? <p>📱 After placing, upload your GCash receipt. You have <strong>5 minutes</strong> to submit.</p>
+                      : <p>💵 Pay cash upon delivery.</p>
                   }
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full mt-4 bg-rosewood-600 hover:bg-rosewood-700"
+                  className="w-full bg-rosewood-600 hover:bg-rosewood-700"
                   disabled={isSubmitting}
                 >
                   {isSubmitting
-                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Placing Order...</>
-                    : 'Place Order'
+                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Placing Order{storeGroups.length > 1 ? 's' : ''}...</>
+                    : `Place Order${storeGroups.length > 1 ? 's' : ''}`
                   }
                 </Button>
               </CardContent>

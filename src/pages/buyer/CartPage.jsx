@@ -39,6 +39,7 @@ export default function CartPage() {
 
   useEffect(() => { fetchCart(); }, []);
 
+  // Prune stale selections when cart updates
   useEffect(() => {
     if (!cart?.cartItems) { setSelected(new Set()); return; }
     const validIds = new Set(cart.cartItems.map((i) => i.id));
@@ -115,6 +116,14 @@ export default function CartPage() {
 
   const groups = groupBySeller(cart.cartItems);
 
+  // Order summary: only selected items
+  const selectedItems = cart.cartItems.filter((i) => selected.has(i.id));
+  const selectedGroups = groupBySeller(selectedItems);
+  const grandTotal = selectedItems.reduce((sum, i) => sum + resolveUnitPrice(i) * i.quantity, 0);
+  const selectedCount = selectedItems.reduce((s, i) => s + i.quantity, 0);
+  // Unique seller IDs from selected items (for checkout)
+  const selectedSellerIds = [...new Set(selectedItems.map((i) => i.product.seller?.id).filter(Boolean))];
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <h1 className="text-2xl font-bold mb-4">Shopping Cart ({cart.itemCount} items)</h1>
@@ -140,42 +149,31 @@ export default function CartPage() {
             disabled={deleting}
             className="ml-auto"
           >
-            {deleting
-              ? <Loader2 className="h-4 w-4 animate-spin mr-1" />
-              : <Trash2 className="h-4 w-4 mr-1" />
-            }
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Trash2 className="h-4 w-4 mr-1" />}
             Remove selected ({selected.size})
           </Button>
         )}
       </div>
 
-      {/* One row per store: items on left, order summary on right */}
-      <div className="space-y-8">
-        {groups.map((group) => {
-          const groupTotal = group.items.reduce(
-            (sum, item) => sum + resolveUnitPrice(item) * item.quantity,
-            0
-          );
-          const groupItemCount = group.items.reduce((s, i) => s + i.quantity, 0);
-          const groupAllSelected = group.items.every((i) => selected.has(i.id));
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          const toggleGroup = () => {
-            setSelected((prev) => {
-              const next = new Set(prev);
-              if (groupAllSelected) {
-                group.items.forEach((i) => next.delete(i.id));
-              } else {
-                group.items.forEach((i) => next.add(i.id));
-              }
-              return next;
-            });
-          };
+        {/* Cart items grouped by store */}
+        <div className="lg:col-span-2 space-y-6">
+          {groups.map((group) => {
+            const groupAllSelected = group.items.every((i) => selected.has(i.id));
+            const groupItemCount = group.items.reduce((s, i) => s + i.quantity, 0);
 
-          return (
-            <div key={group.sellerId} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            const toggleGroup = () => {
+              setSelected((prev) => {
+                const next = new Set(prev);
+                if (groupAllSelected) group.items.forEach((i) => next.delete(i.id));
+                else group.items.forEach((i) => next.add(i.id));
+                return next;
+              });
+            };
 
-              {/* Items card */}
-              <div className="lg:col-span-2 border rounded-xl overflow-hidden">
+            return (
+              <div key={group.sellerId} className="border rounded-xl overflow-hidden">
                 {/* Store header */}
                 <div className="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b">
                   <input
@@ -185,10 +183,7 @@ export default function CartPage() {
                     onChange={toggleGroup}
                   />
                   <Store className="h-4 w-4 text-rosewood-600 flex-shrink-0" />
-                  <Link
-                    to={`/store/${group.sellerId}`}
-                    className="font-semibold text-sm hover:text-rosewood-600 truncate"
-                  >
+                  <Link to={`/store/${group.sellerId}`} className="font-semibold text-sm hover:text-rosewood-600 truncate">
                     {group.storeName}
                   </Link>
                   <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
@@ -237,9 +232,7 @@ export default function CartPage() {
                               ))}
                             </div>
                           )}
-                          <p className="text-rosewood-600 font-bold mt-1">
-                            {formatCurrency(resolveUnitPrice(item))}
-                          </p>
+                          <p className="text-rosewood-600 font-bold mt-1">{formatCurrency(resolveUnitPrice(item))}</p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <button onClick={() => handleRemove(item.id, item.productId)} className="text-muted-foreground hover:text-destructive">
@@ -264,54 +257,81 @@ export default function CartPage() {
                               <Plus className="h-3 w-3" />
                             </button>
                           </div>
-                          <p className="text-sm font-medium">
-                            {formatCurrency(resolveUnitPrice(item) * item.quantity)}
-                          </p>
+                          <p className="text-sm font-medium">{formatCurrency(resolveUnitPrice(item) * item.quantity)}</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              {/* Per-store Order Summary */}
-              <div>
-                <Card className="lg:sticky lg:top-20">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Order Summary</CardTitle>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Store className="h-3 w-3" /> {group.storeName}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-2 pt-0">
-                    {group.items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground truncate mr-2 flex-1">
-                          {item.product.name}
-                          {item.quantity > 1 && <span className="ml-1">×{item.quantity}</span>}
-                        </span>
-                        <span className="whitespace-nowrap">{formatCurrency(resolveUnitPrice(item) * item.quantity)}</span>
+        {/* Unified Order Summary */}
+        <div>
+          <Card className="lg:sticky lg:top-20">
+            <CardHeader className="pb-3">
+              <CardTitle>Order Summary</CardTitle>
+              {selectedCount === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">Select items to see your order summary.</p>
+              )}
+            </CardHeader>
+
+            {selectedCount > 0 && (
+              <CardContent className="space-y-4 pt-0">
+                {/* Per-store breakdown */}
+                {selectedGroups.map((group) => {
+                  const groupSubtotal = group.items.reduce((sum, i) => sum + resolveUnitPrice(i) * i.quantity, 0);
+                  return (
+                    <div key={group.sellerId} className="space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Store className="h-3.5 w-3.5 text-rosewood-600 flex-shrink-0" />
+                        <span className="text-sm font-semibold truncate">{group.storeName}</span>
                       </div>
-                    ))}
-                    <div className="border-t pt-2 flex justify-between font-bold text-sm">
-                      <span>Subtotal ({groupItemCount} item{groupItemCount !== 1 ? 's' : ''})</span>
-                      <span className="text-rosewood-600">{formatCurrency(groupTotal)}</span>
+                      {group.items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-xs text-muted-foreground pl-5">
+                          <span className="truncate mr-2 flex-1">
+                            {item.product.name}{item.quantity > 1 ? ` ×${item.quantity}` : ''}
+                          </span>
+                          <span className="whitespace-nowrap">{formatCurrency(resolveUnitPrice(item) * item.quantity)}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between text-sm pl-5 font-medium">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>{formatCurrency(groupSubtotal)}</span>
+                      </div>
                     </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      className="w-full bg-rosewood-600 hover:bg-rosewood-700"
-                      onClick={() => navigate('/checkout', { state: { sellerId: group.sellerId } })}
-                    >
-                      Checkout <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
+                  );
+                })}
 
-            </div>
-          );
-        })}
+                <div className="border-t pt-3 space-y-1">
+                  <div className="flex justify-between font-bold">
+                    <span>Total ({selectedCount} item{selectedCount !== 1 ? 's' : ''})</span>
+                    <span className="text-rosewood-600">{formatCurrency(grandTotal)}</span>
+                  </div>
+                  {selectedSellerIds.length > 1 && (
+                    <p className="text-xs text-muted-foreground">
+                      {selectedSellerIds.length} separate orders will be created — one per store.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            )}
+
+            <CardFooter className={selectedCount === 0 ? 'pt-0' : ''}>
+              <Button
+                className="w-full bg-rosewood-600 hover:bg-rosewood-700"
+                disabled={selectedCount === 0}
+                onClick={() => navigate('/checkout', { state: { sellerIds: selectedSellerIds } })}
+              >
+                Proceed to Checkout
+                {selectedCount > 0 && <ArrowRight className="h-4 w-4 ml-2" />}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+
       </div>
     </div>
   );

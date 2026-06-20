@@ -302,7 +302,7 @@ export default function MarketplacePage() {
                       <Button
                         size="sm"
                         className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
-                        onClick={() => navigate(`/store/${product.seller?.id}`)}
+                        onClick={() => navigate(`/products/${product.slug}`)}
                       >
                         <Store className="h-3.5 w-3.5 mr-1" />Buy Now
                       </Button>
@@ -373,7 +373,7 @@ export default function MarketplacePage() {
                     <Button
                       size="sm"
                       className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700"
-                      onClick={() => navigate(`/store/${product.seller?.id}`)}
+                      onClick={() => navigate(`/products/${product.slug}`)}
                     >
                       <Store className="h-4 w-4 mr-1" />Buy Now
                     </Button>
