@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, Bell, User, LogOut, Store, LayoutDashboard, Package, ShoppingBag, Home, Users, Heart, MapPin, RotateCcw, Settings, Star, CreditCard, HelpCircle, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Bell, User, LogOut, Store, LayoutDashboard, Package, ShoppingBag, Home, Users, Heart, MapPin, RotateCcw, Settings, Star, CreditCard, HelpCircle, ChevronDown, Flag } from 'lucide-react';
 import { Button } from '../ui/button';
 import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
@@ -295,6 +295,11 @@ export default function Navbar() {
               <Link to="/faq" className="flex items-center gap-3 px-5 py-3.5 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
                 <HelpCircle className="h-5 w-5 text-gray-400" /> Help & FAQ
               </Link>
+              {user.role !== 'ADMIN' && (
+                <Link to="/report-issue" className="flex items-center gap-3 px-5 py-3.5 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100">
+                  <Flag className="h-5 w-5 text-gray-400" /> Report an Issue
+                </Link>
+              )}
               <div className="border-t border-gray-100 mt-1">
                 <button
                   onClick={handleLogout}
