@@ -3,11 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Store, Loader2, ShoppingCart, Star, MapPin } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { storeAPI } from '../api';
+import { storeAPI, productAPI } from '../api';
 import useCartStore from '../store/cartStore';
 import useAuthStore from '../store/authStore';
 import { formatCurrency } from '../lib/utils';
 import { toast } from '../components/ui/toast';
+import AddToCartModal from '../components/product/AddToCartModal';
 
 export default function StorePage() {
   const { sellerId } = useParams();
@@ -15,7 +16,9 @@ export default function StorePage() {
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [addingId, setAddingId] = useState(null);
+  const [fetchingId, setFetchingId] = useState(null);
+  const [modalProduct, setModalProduct] = useState(null);
+  const [adding, setAdding] = useState(false);
   const { addItem } = useCartStore();
   const { user } = useAuthStore();
 
@@ -29,17 +32,33 @@ export default function StorePage() {
       .finally(() => setIsLoading(false));
   }, [sellerId]);
 
-  const handleAddToCart = async (productId, name) => {
+  const handleAddToCartClick = async (product) => {
     if (!user) { toast({ title: 'Please log in to add items to cart', variant: 'destructive' }); return; }
     if (user.role !== 'BUYER') { toast({ title: 'Only buyers can add to cart', variant: 'destructive' }); return; }
-    setAddingId(productId);
+    setFetchingId(product.id);
     try {
-      await addItem(productId, 1);
-      toast({ title: `${name} added to cart!` });
-    } catch (err) {
-      toast({ title: 'Error', description: err.response?.data?.message || 'Failed to add item', variant: 'destructive' });
+      const { data } = await productAPI.getBySlug(product.slug);
+      setModalProduct(data.data);
+    } catch {
+      toast({ title: 'Failed to load product', variant: 'destructive' });
     } finally {
-      setAddingId(null);
+      setFetchingId(null);
+    }
+  };
+
+  const handleConfirmAdd = async (items) => {
+    setAdding(true);
+    try {
+      for (const item of items) {
+        const hasOptions = item.selectedOptions.variants?.length || item.selectedOptions.addons?.length;
+        await addItem(modalProduct.id, 1, hasOptions ? item.selectedOptions : null);
+      }
+      toast({ title: `${items.length}× ${modalProduct.name} added to cart!` });
+      setModalProduct(null);
+    } catch (err) {
+      toast({ title: 'Error', description: err.response?.data?.message, variant: 'destructive' });
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -47,6 +66,15 @@ export default function StorePage() {
   if (!store) return null;
 
   return (
+    <>
+    {modalProduct && (
+      <AddToCartModal
+        product={modalProduct}
+        onClose={() => setModalProduct(null)}
+        onConfirm={handleConfirmAdd}
+        isLoading={adding}
+      />
+    )}
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <Link to="/stores" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft className="h-4 w-4" /> All Stores
@@ -104,15 +132,21 @@ export default function StorePage() {
           >
             {products.map((product) => {
               const image = product.images?.[0]?.url;
+              const outOfStock = product.stockQty === 0;
               return (
                 <div key={product.id} className="snap-start flex-shrink-0 w-44">
-                  <Card className="overflow-hidden hover:shadow-md transition-shadow group h-full">
+                  <Card className={`overflow-hidden hover:shadow-md transition-shadow group h-full ${outOfStock ? 'opacity-70' : ''}`}>
                     <Link to={`/products/${product.slug}`}>
-                      <div className="aspect-square bg-muted overflow-hidden">
+                      <div className="relative aspect-square bg-muted overflow-hidden">
                         {image ? (
                           <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                        )}
+                        {outOfStock && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="text-white font-semibold text-xs">Out of Stock</span>
+                          </div>
                         )}
                       </div>
                     </Link>
@@ -125,10 +159,15 @@ export default function StorePage() {
                         <Button
                           size="sm"
                           className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
-                          onClick={() => handleAddToCart(product.id, product.name)}
-                          disabled={addingId === product.id}
+                          onClick={() => handleAddToCartClick(product)}
+                          disabled={fetchingId === product.id || outOfStock}
                         >
-                          {addingId === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>}
+                          {fetchingId === product.id
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : outOfStock
+                              ? 'Out of Stock'
+                              : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>
+                          }
                         </Button>
                       )}
                     </CardContent>
@@ -142,14 +181,20 @@ export default function StorePage() {
           <div className="hidden sm:grid grid-cols-3 md:grid-cols-4 gap-4">
             {products.map((product) => {
               const image = product.images?.[0]?.url;
+              const outOfStock = product.stockQty === 0;
               return (
-                <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group">
+                <Card key={product.id} className={`overflow-hidden hover:shadow-md transition-shadow group ${outOfStock ? 'opacity-70' : ''}`}>
                   <Link to={`/products/${product.slug}`}>
-                    <div className="aspect-square bg-muted overflow-hidden">
+                    <div className="relative aspect-square bg-muted overflow-hidden">
                       {image ? (
                         <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                      )}
+                      {outOfStock && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">Out of Stock</span>
+                        </div>
                       )}
                     </div>
                   </Link>
@@ -162,10 +207,15 @@ export default function StorePage() {
                       <Button
                         size="sm"
                         className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
-                        onClick={() => handleAddToCart(product.id, product.name)}
-                        disabled={addingId === product.id}
+                        onClick={() => handleAddToCartClick(product)}
+                        disabled={fetchingId === product.id || outOfStock}
                       >
-                        {addingId === product.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>}
+                        {fetchingId === product.id
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : outOfStock
+                            ? 'Out of Stock'
+                            : <><ShoppingCart className="h-3 w-3 mr-1" />Add to Cart</>
+                        }
                       </Button>
                     )}
                   </CardContent>
@@ -176,5 +226,6 @@ export default function StorePage() {
         </>
       )}
     </div>
+    </>
   );
 }

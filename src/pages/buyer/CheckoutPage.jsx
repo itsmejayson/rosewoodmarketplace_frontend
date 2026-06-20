@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -56,8 +56,10 @@ const FULFILLMENT_TYPES = [
 ];
 
 export default function CheckoutPage() {
-  const { cart, fetchCart, clearCart } = useCartStore();
+  const { cart, fetchCart } = useCartStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const sellerId = location.state?.sellerId ?? null;
   const [paymentMethod, setPaymentMethod] = useState('GCASH');
   const [fulfillmentType, setFulfillmentType] = useState('DELIVERY');
 
@@ -96,11 +98,25 @@ export default function CheckoutPage() {
     setValue('shippingCountry', a.country || '');
   };
 
-  const total = cart?.subtotal || 0;
+  // Filter to the specific store being checked out (or all items if no sellerId)
+  const checkoutItems = sellerId
+    ? (cart?.cartItems ?? []).filter((i) => i.product.seller?.id === sellerId)
+    : (cart?.cartItems ?? []);
+
+  const storeName = checkoutItems[0]?.product?.seller?.storeName
+    || checkoutItems[0]?.product?.seller?.fullName
+    || null;
+
+  const total = checkoutItems.reduce((sum, i) => {
+    const price = i.selectedOptions?.unitPrice != null
+      ? parseFloat(i.selectedOptions.unitPrice)
+      : parseFloat(i.product.price);
+    return sum + price * i.quantity;
+  }, 0);
 
   const onSubmit = (data) => {
-    if (!cart?.cartItems?.length) {
-      toast({ title: 'Your cart is empty', variant: 'destructive' });
+    if (!checkoutItems.length) {
+      toast({ title: 'No items to checkout', variant: 'destructive' });
       return;
     }
     setPendingData(data);
@@ -111,7 +127,12 @@ export default function CheckoutPage() {
     setShowConfirm(false);
     setIsSubmitting(true);
     try {
-      const { data: res } = await orderAPI.checkout({ ...pendingData, paymentMethod, fulfillmentType });
+      const { data: res } = await orderAPI.checkout({
+        ...pendingData,
+        paymentMethod,
+        fulfillmentType,
+        ...(sellerId ? { sellerId } : {}),
+      });
       const { order } = res.data;
       toast({
         title: 'Order placed!',
@@ -119,7 +140,7 @@ export default function CheckoutPage() {
           ? `Order #${order.orderNumber} — you can pay now.`
           : `Order #${order.orderNumber} — waiting for seller to confirm.`,
       });
-      await clearCart();
+      await fetchCart();
       navigate(`/orders/${order.id}`, { state: { justPlaced: true } });
     } catch (err) {
       toast({
@@ -132,12 +153,12 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!cart?.cartItems?.length) {
+  if (!checkoutItems.length) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
         <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-        <p className="text-muted-foreground mb-4">Your cart is empty.</p>
-        <Button onClick={() => navigate('/marketplace')}>Browse Marketplace</Button>
+        <p className="text-muted-foreground mb-4">No items to checkout.</p>
+        <Button onClick={() => navigate('/cart')}>Back to Cart</Button>
       </div>
     );
   }
@@ -159,11 +180,17 @@ export default function CheckoutPage() {
           </div>
 
           <div className="overflow-y-auto flex-1 p-4 space-y-4">
+            {/* Store label */}
+            {storeName && (
+              <div className="flex items-center gap-1.5 text-sm font-medium text-rosewood-700">
+                <Store className="h-4 w-4" /> {storeName}
+              </div>
+            )}
             {/* Items */}
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Items</p>
               <div className="space-y-2">
-                {cart.cartItems.map((item) => (
+                {checkoutItems.map((item) => (
                   <div key={item.id} className="flex justify-between items-start text-sm">
                     <div className="flex-1 mr-2">
                       <p className="font-medium line-clamp-1">{item.product.name}</p>
@@ -371,10 +398,17 @@ export default function CheckoutPage() {
           {/* Order Summary */}
           <div>
             <Card className="sticky top-20">
-              <CardHeader><CardTitle className="text-base">Order Summary</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-base">Order Summary</CardTitle>
+                {storeName && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Store className="h-3 w-3" /> {storeName}
+                  </p>
+                )}
+              </CardHeader>
               <CardContent>
                 <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
-                  {cart.cartItems.map((item) => (
+                  {checkoutItems.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
                       <span className="text-muted-foreground line-clamp-1 flex-1 mr-2">
                         {item.product.name} × {item.quantity}

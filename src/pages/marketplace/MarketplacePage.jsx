@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { Search, ShoppingCart, AlertCircle, X, Heart } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { Search, AlertCircle, X, Heart, Store } from 'lucide-react';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -9,10 +9,8 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { productAPI, favoriteAPI } from '../../api';
 import { formatCurrency } from '../../lib/utils';
-import useCartStore from '../../store/cartStore';
 import useAuthStore from '../../store/authStore';
 import { toast } from '../../components/ui/toast';
-import AddToCartModal from '../../components/product/AddToCartModal';
 
 export default function MarketplacePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,16 +18,12 @@ export default function MarketplacePage() {
   const [categories, setCategories] = useState([]);
   const [meta, setMeta] = useState({ total: 0, pages: 1, page: 1 });
   const [isLoading, setIsLoading] = useState(true);
-  const [modalProduct, setModalProduct] = useState(null);
-  const [fetchingProduct, setFetchingProduct] = useState(null);
-  const [adding, setAdding] = useState(false);
-
   const [favoriteIds, setFavoriteIds] = useState(new Set());
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const debounceRef = useRef(null);
 
-  const { addItem } = useCartStore();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   const params = {
     search: searchParams.get('search') || '',
@@ -125,46 +119,7 @@ export default function MarketplacePage() {
     }
   };
 
-  const handleAddToCartClick = async (product) => {
-    if (!user) { toast({ title: 'Please log in to add items to cart', variant: 'destructive' }); return; }
-    if (user.role !== 'BUYER') return;
-    setFetchingProduct(product.id);
-    try {
-      const { data } = await productAPI.getBySlug(product.slug);
-      setModalProduct(data.data);
-    } catch {
-      toast({ title: 'Failed to load product', variant: 'destructive' });
-    } finally {
-      setFetchingProduct(null);
-    }
-  };
-
-  const handleConfirmAdd = async (items) => {
-    setAdding(true);
-    try {
-      for (const item of items) {
-        const hasOptions = item.selectedOptions.variants?.length || item.selectedOptions.addons?.length;
-        await addItem(modalProduct.id, 1, hasOptions ? item.selectedOptions : null);
-      }
-      toast({ title: `${items.length}× ${modalProduct.name} added to cart!` });
-      setModalProduct(null);
-    } catch (err) {
-      toast({ title: 'Error', description: err.response?.data?.message, variant: 'destructive' });
-    } finally {
-      setAdding(false);
-    }
-  };
-
   return (
-    <>
-    {modalProduct && (
-      <AddToCartModal
-        product={modalProduct}
-        onClose={() => setModalProduct(null)}
-        onConfirm={handleConfirmAdd}
-        isLoading={adding}
-      />
-    )}
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Marketplace</h1>
@@ -343,17 +298,13 @@ export default function MarketplacePage() {
                       <span className="font-bold text-rosewood-600 text-sm">{formatCurrency(product.price)}</span>
                       <span className="text-xs text-muted-foreground">{product.stockQty} left</span>
                     </div>
-                    {user?.role === 'BUYER' && (
+                    {product.stockQty > 0 && (
                       <Button
                         size="sm"
                         className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
-                        disabled={product.stockQty === 0 || fetchingProduct === product.id}
-                        onClick={() => handleAddToCartClick(product)}
+                        onClick={() => navigate(`/store/${product.seller?.id}`)}
                       >
-                        {fetchingProduct === product.id
-                          ? <span className="h-3.5 w-3.5 animate-spin border-2 border-white border-t-transparent rounded-full inline-block" />
-                          : <><ShoppingCart className="h-3.5 w-3.5 mr-1" />{product.stockQty === 0 ? 'Out of Stock' : 'Add to Cart'}</>
-                        }
+                        <Store className="h-3.5 w-3.5 mr-1" />Buy Now
                       </Button>
                     )}
                   </CardContent>
@@ -418,17 +369,13 @@ export default function MarketplacePage() {
                     <span className="font-bold text-rosewood-600">{formatCurrency(product.price)}</span>
                     <span className="text-xs text-muted-foreground">{product.stockQty} left</span>
                   </div>
-                  {user?.role === 'BUYER' && (
+                  {product.stockQty > 0 && (
                     <Button
                       size="sm"
                       className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700"
-                      disabled={product.stockQty === 0 || fetchingProduct === product.id}
-                      onClick={() => handleAddToCartClick(product)}
+                      onClick={() => navigate(`/store/${product.seller?.id}`)}
                     >
-                      {fetchingProduct === product.id
-                        ? <><span className="h-4 w-4 mr-1 animate-spin border-2 border-white border-t-transparent rounded-full inline-block" /> Loading...</>
-                        : <><ShoppingCart className="h-4 w-4 mr-1" />{product.stockQty === 0 ? 'Out of Stock' : 'Add to Cart'}</>
-                      }
+                      <Store className="h-4 w-4 mr-1" />Buy Now
                     </Button>
                   )}
                 </CardContent>
@@ -463,6 +410,5 @@ export default function MarketplacePage() {
         </div>
       )}
     </div>
-    </>
   );
 }
