@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShoppingCart, Loader2, ArrowLeft, Package, Thermometer, Calendar, Tag, Heart, Star } from 'lucide-react';
+import { ShoppingCart, Loader2, ArrowLeft, Package, Thermometer, Calendar, Tag, Heart, Star, Share2, Copy, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent } from '../../components/ui/card';
@@ -33,6 +33,7 @@ export default function ProductDetailPage() {
 
   // Favorites
   const [isFavorite, setIsFavorite] = useState(false);
+  const [copied, setCopied] = useState(false);
   // Similar products
   const [similar, setSimilar] = useState([]);
   const [addingSimilarId, setAddingSimilarId] = useState(null);
@@ -105,6 +106,19 @@ export default function ProductDetailPage() {
         .catch(() => {});
     }
   }, [product?.id, user?.id]);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.name, text: `Check out ${product.name} on Rosewood Marketplace!`, url });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const toggleFavorite = async () => {
     if (!user || user.role !== 'BUYER') {
@@ -277,16 +291,26 @@ export default function ProductDetailPage() {
             </div>
             <div className="flex items-start justify-between gap-3 mb-2">
               <h1 className="text-3xl font-bold">{product.name}</h1>
-              {user?.role === 'BUYER' && (
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
-                  onClick={toggleFavorite}
-                  className="h-10 w-10 rounded-full border flex items-center justify-center flex-shrink-0 hover:bg-muted"
-                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  onClick={handleShare}
+                  className="h-10 w-10 rounded-full border flex items-center justify-center hover:bg-muted transition-colors"
+                  title="Share product"
                 >
-                  <Heart className={`h-5 w-5 ${isFavorite ? 'fill-rosewood-500 text-rosewood-500' : 'text-muted-foreground'}`} />
+                  {copied ? <Check className="h-5 w-5 text-green-500" /> : <Share2 className="h-5 w-5 text-muted-foreground" />}
                 </button>
-              )}
+                {user?.role === 'BUYER' && (
+                  <button
+                    type="button"
+                    onClick={toggleFavorite}
+                    className="h-10 w-10 rounded-full border flex items-center justify-center hover:bg-muted transition-colors"
+                    title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <Heart className={`h-5 w-5 ${isFavorite ? 'fill-rosewood-500 text-rosewood-500' : 'text-muted-foreground'}`} />
+                  </button>
+                )}
+              </div>
             </div>
             {reviewData.reviewCount > 0 && (
               <div className="flex items-center gap-2 mb-2">
