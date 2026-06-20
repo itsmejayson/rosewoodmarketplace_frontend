@@ -344,8 +344,10 @@ export default function MarketplacePage() {
                   <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">{product.name}</p>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-sm font-bold text-rosewood-600">{formatCurrency(product.price)}</span>
-                    {product.stockQty > 0 && product.stockQty <= 10 && (
-                      <span className="text-[10px] text-orange-500 font-medium">{product.stockQty} left</span>
+                    {product.stockQty > 0 && (
+                      <span className={`text-[10px] font-medium ${product.stockQty <= 5 ? 'text-red-500' : product.stockQty <= 20 ? 'text-orange-500' : 'text-gray-400'}`}>
+                        {product.stockQty} left
+                      </span>
                     )}
                   </div>
                   {product.stockQty > 0 && (
