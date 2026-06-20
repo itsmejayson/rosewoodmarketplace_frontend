@@ -167,9 +167,9 @@ export default function Navbar() {
                   </Link>
                 )}
 
-                {/* Cart (buyer, mobile top bar) */}
+                {/* Cart (buyer, desktop only — mobile uses bottom nav) */}
                 {user.role === 'BUYER' && (
-                  <Link to="/cart" className="md:hidden relative">
+                  <Link to="/cart" className="hidden md:flex relative">
                     <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
                       <ShoppingCart className="h-5 w-5 text-gray-600" />
                       {itemCount > 0 && (
