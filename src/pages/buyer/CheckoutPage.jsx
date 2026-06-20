@@ -16,11 +16,9 @@ import { toast } from '../../components/ui/toast';
 const deliverySchema = z.object({
   shippingName: z.string().min(2, 'Name is required'),
   shippingPhone: z.string().min(7, 'Contact number is required'),
-  shippingAddress: z.string().min(2, 'Street is required'),
-  shippingCity: z.string().min(2, 'Subdivision is required'),
-  shippingState: z.string().min(2, 'Phase is required'),
-  shippingZip: z.string().optional(),
-  shippingCountry: z.string().optional(),
+  shippingState: z.string().min(1, 'Phase is required'),
+  shippingAddress: z.string().min(1, 'Lot is required'),
+  shippingCity: z.string().min(1, 'Block is required'),
   notes: z.string().optional(),
 });
 
@@ -66,9 +64,9 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Support both old single sellerId and new sellerIds array
   const sellerIds = location.state?.sellerIds
     ?? (location.state?.sellerId ? [location.state.sellerId] : []);
+  const itemIds = location.state?.itemIds ?? null; // null means "all items from those sellers"
 
   const [paymentMethod, setPaymentMethod] = useState('GCASH');
   const [fulfillmentType, setFulfillmentType] = useState('DELIVERY');
@@ -121,9 +119,9 @@ export default function CheckoutPage() {
     setValue('shippingCountry', a.country || '');
   };
 
-  // Items from selected sellers, grouped by seller
+  // Filter to exactly the items the buyer selected in the cart
   const checkoutItems = (cart?.cartItems ?? []).filter((i) =>
-    sellerIds.includes(i.product.seller?.id)
+    itemIds ? itemIds.includes(i.id) : sellerIds.includes(i.product.seller?.id)
   );
 
   // Per-store groups for display
@@ -400,38 +398,30 @@ export default function CheckoutPage() {
               <Card>
                 <CardHeader><CardTitle className="text-base">Delivery Address</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  {savedAddresses.length > 0 && (
-                    <div className="space-y-1">
-                      <Label htmlFor="savedAddress">Use a saved address</Label>
-                      <select
-                        id="savedAddress"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        defaultValue=""
-                        onChange={(e) => applySavedAddress(e.target.value)}
-                      >
-                        <option value="">— Select a saved address —</option>
-                        {savedAddresses.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.label ? `${a.label} — ` : ''}{a.fullName}, {a.address}, {a.city}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {[
-                    { id: 'shippingName', label: 'Full Name', placeholder: 'Juan dela Cruz' },
-                    { id: 'shippingState', label: 'Phase', placeholder: 'e.g. Phase 1' },
-                    { id: 'shippingAddress', label: 'Street', placeholder: 'e.g. Rizal St' },
-                    { id: 'shippingCity', label: 'Subdivision', placeholder: 'e.g. Villa Verde Subdivision' },
-                  ].map(({ id, label, placeholder }) => (
-                    <div key={id} className="space-y-1">
-                      <Label htmlFor={id}>{label}</Label>
-                      <Input id={id} placeholder={placeholder} {...register(id)} />
-                      {errors[id] && <p className="text-xs text-destructive">{errors[id].message}</p>}
-                    </div>
-                  ))}
                   <div className="space-y-1">
-                    <Label htmlFor="shippingPhone">Contact Number</Label>
+                    <Label htmlFor="shippingName">Full Name *</Label>
+                    <Input id="shippingName" placeholder="Juan dela Cruz" {...register('shippingName')} />
+                    {errors.shippingName && <p className="text-xs text-destructive">{errors.shippingName.message}</p>}
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="shippingState">Phase *</Label>
+                    <Input id="shippingState" placeholder="e.g. Phase 1" {...register('shippingState')} />
+                    {errors.shippingState && <p className="text-xs text-destructive">{errors.shippingState.message}</p>}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="shippingAddress">Lot *</Label>
+                      <Input id="shippingAddress" placeholder="e.g. Lot 12" {...register('shippingAddress')} />
+                      {errors.shippingAddress && <p className="text-xs text-destructive">{errors.shippingAddress.message}</p>}
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="shippingCity">Block *</Label>
+                      <Input id="shippingCity" placeholder="e.g. Block 3" {...register('shippingCity')} />
+                      {errors.shippingCity && <p className="text-xs text-destructive">{errors.shippingCity.message}</p>}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="shippingPhone">Contact Number *</Label>
                     <Input
                       id="shippingPhone"
                       type="tel"

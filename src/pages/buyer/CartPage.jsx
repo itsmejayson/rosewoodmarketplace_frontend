@@ -121,8 +121,8 @@ export default function CartPage() {
   const selectedGroups = groupBySeller(selectedItems);
   const grandTotal = selectedItems.reduce((sum, i) => sum + resolveUnitPrice(i) * i.quantity, 0);
   const selectedCount = selectedItems.reduce((s, i) => s + i.quantity, 0);
-  // Unique seller IDs from selected items (for checkout)
   const selectedSellerIds = [...new Set(selectedItems.map((i) => i.product.seller?.id).filter(Boolean))];
+  const selectedItemIds = selectedItems.map((i) => i.id);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -325,7 +325,7 @@ export default function CartPage() {
                     : 'bg-rosewood-600 hover:bg-rosewood-700 text-white'
                 }`}
                 disabled={selectedCount === 0}
-                onClick={() => navigate('/checkout', { state: { sellerIds: selectedSellerIds } })}
+                onClick={() => navigate('/checkout', { state: { sellerIds: selectedSellerIds, itemIds: selectedItemIds } })}
               >
                 Proceed to Checkout
                 {selectedCount > 0 && <ArrowRight className="h-4 w-4" />}
