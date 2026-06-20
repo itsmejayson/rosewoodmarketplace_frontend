@@ -16,6 +16,17 @@ export const truncate = (str, n) => (str?.length > n ? str.slice(0, n - 1) + 'â€
 export const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || '??';
 
+export const ORDER_STATUS_LABELS = {
+  PENDING: 'Pending',
+  AWAITING_PAYMENT: 'Awaiting Payment',
+  PAID: 'Paid',
+  PROCESSING: 'Processing',
+  SHIPPED: 'Shipped',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+  REFUNDED: 'Refunded',
+};
+
 export const ORDER_STATUS_COLORS = {
   PENDING: 'bg-yellow-100 text-yellow-800',
   AWAITING_PAYMENT: 'bg-orange-100 text-orange-800',

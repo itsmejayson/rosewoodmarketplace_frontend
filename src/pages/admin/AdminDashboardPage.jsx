@@ -4,7 +4,7 @@ import { useSocket } from '../../hooks/useSocket';
 import { Users, Store, ShoppingBag, Package, TrendingUp, Loader2, Wifi, CreditCard, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { userAPI } from '../../api';
-import { formatCurrency, formatDate } from '../../lib/utils';
+import { formatCurrency, formatDate, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../lib/utils';
 
 const StatCard = ({ icon: Icon, label, value, color, bg }) => (
   <Card className="flex-1">
@@ -161,14 +161,8 @@ export default function AdminDashboardPage() {
                       <td className="px-5 py-3.5 text-muted-foreground hidden sm:table-cell">{order.buyer?.fullName}</td>
                       <td className="px-5 py-3.5 text-right font-semibold">{formatCurrency(order.totalAmount)}</td>
                       <td className="px-5 py-3.5 text-center">
-                        <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                          order.status === 'DELIVERED'  ? 'bg-green-100 text-green-700' :
-                          order.status === 'CANCELLED'  ? 'bg-red-100 text-red-700' :
-                          order.status === 'SHIPPED'    ? 'bg-blue-100 text-blue-700' :
-                          order.status === 'PROCESSING' ? 'bg-purple-100 text-purple-700' :
-                          'bg-amber-100 text-amber-700'
-                        }`}>
-                          {order.status}
+                        <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium ${ORDER_STATUS_COLORS[order.status] || 'bg-amber-100 text-amber-800'}`}>
+                          {ORDER_STATUS_LABELS[order.status] || order.status}
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-right text-muted-foreground text-xs hidden md:table-cell">{formatDate(order.createdAt)}</td>

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Banknote, Smartphone, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
-import { formatCurrency, formatDate, ORDER_STATUS_COLORS } from '../../lib/utils';
+import { formatCurrency, formatDate, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../lib/utils';
 
 export default function SellerOrderCard({ order }) {
   const navigate = useNavigate();
@@ -20,8 +20,8 @@ export default function SellerOrderCard({ order }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-bold">#{order.orderNumber}</p>
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${ORDER_STATUS_COLORS[order.status]}`}>
-                {order.status}
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${ORDER_STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'}`}>
+                {ORDER_STATUS_LABELS[order.status] || order.status}
               </span>
               {tx && (
                 <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold border ${

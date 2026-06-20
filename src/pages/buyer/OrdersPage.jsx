@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { orderAPI, cartAPI } from '../../api';
-import { formatCurrency, formatDate, ORDER_STATUS_COLORS } from '../../lib/utils';
+import { formatCurrency, formatDate, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
 
 export default function OrdersPage() {
@@ -62,8 +62,8 @@ export default function OrdersPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {['ALL','PENDING','PAID','PROCESSING','SHIPPED','DELIVERED','CANCELLED'].map((s) => (
-              <SelectItem key={s} value={s}>{s === 'ALL' ? 'All Orders' : s}</SelectItem>
+            {['ALL','PENDING','AWAITING_PAYMENT','PAID','PROCESSING','SHIPPED','DELIVERED','CANCELLED'].map((s) => (
+              <SelectItem key={s} value={s}>{s === 'ALL' ? 'All Orders' : (ORDER_STATUS_LABELS[s] || s)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -96,8 +96,8 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <div className="text-right">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${ORDER_STATUS_COLORS[order.status]}`}>
-                        {order.status}
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${ORDER_STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'}`}>
+                        {ORDER_STATUS_LABELS[order.status] || order.status}
                       </span>
                       <p className="font-bold text-rosewood-600 mt-1">{formatCurrency(order.totalAmount)}</p>
                     </div>
