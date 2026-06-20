@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Lock, Camera, Loader2, Store, Bell, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { User, Lock, Camera, Loader2, Store, Bell, Eye, EyeOff, ArrowLeft, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -266,6 +266,21 @@ export default function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Report an Issue — hidden for admins since they receive reports, not submit them */}
+      {user?.role !== 'ADMIN' && <button
+        onClick={() => navigate('/report-issue')}
+        className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-gray-100 hover:border-rosewood-200 hover:shadow-md transition-all text-left"
+      >
+        <div className="h-9 w-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+          <Flag className="h-4 w-4 text-red-500" />
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-sm text-gray-900">Report an Issue</p>
+          <p className="text-xs text-gray-500">Found a bug or having trouble? Let us know.</p>
+        </div>
+        <ArrowLeft className="h-4 w-4 text-gray-400 rotate-180" />
+      </button>}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSocket } from '../../hooks/useSocket';
-import { Users, Store, ShoppingBag, Package, TrendingUp, Loader2, Wifi, CreditCard, Clock, Settings } from 'lucide-react';
+import { Users, Store, ShoppingBag, Package, TrendingUp, Loader2, Wifi, CreditCard, Clock, Settings, Flag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { userAPI } from '../../api';
 import { formatCurrency, formatDate, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../lib/utils';
@@ -148,6 +148,14 @@ export default function AdminDashboardPage() {
             iconBg="bg-gray-100"
             title="System Settings"
             subtitle="AI assistant & more"
+          />
+          <QuickCard
+            to="/admin/reports"
+            icon={Flag}
+            iconColor="text-red-600"
+            iconBg="bg-red-50"
+            title="Issue Reports"
+            subtitle="User-reported bugs"
           />
         </div>
       </div>

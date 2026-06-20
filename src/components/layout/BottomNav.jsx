@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingCart, ShoppingBag, LayoutDashboard, Package, User, Store, Users, Settings } from 'lucide-react';
+import { Home, ShoppingCart, ShoppingBag, LayoutDashboard, Package, User, Store, Users, Settings, Flag } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
 import useSellerOrderStore from '../../store/sellerOrderStore';
@@ -130,6 +130,10 @@ export default function BottomNav() {
           <Link to="/admin/settings" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/admin/settings') ? 'text-rosewood-600' : 'text-gray-400'}`}>
             <Settings className="h-5 w-5" strokeWidth={isActive('/admin/settings') ? 2.5 : 1.8} />
             Settings
+          </Link>
+          <Link to="/admin/reports" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/admin/reports') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <Flag className="h-5 w-5" strokeWidth={isActive('/admin/reports') ? 2.5 : 1.8} />
+            Reports
           </Link>
           <Link to="/profile" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/profile') ? 'text-rosewood-600' : 'text-gray-400'}`}>
             <User className="h-5 w-5" strokeWidth={isActive('/profile') ? 2.5 : 1.8} />

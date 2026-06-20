@@ -32,56 +32,34 @@ export const useSocket = () => {
       if (user.role === 'ADMIN') socket.emit('joinAdmin');
     });
 
+    // Single source of truth for store updates — specific events only show toasts
     socket.on('notification', (notification) => {
       addNotification(notification);
+      toast({ title: notification.title, description: notification.message });
     });
 
-    // Seller: new order placed
+    // Seller: new order placed — toast only (notification event handles store)
     socket.on('newOrder', ({ orderNumber }) => {
-      addNotification({
-        id: Date.now().toString(),
-        type: 'ORDER_PLACED',
-        title: 'New Order',
-        message: `New order #${orderNumber} received!`,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
       toast({ title: '🛒 New order received!', description: `Order #${orderNumber}` });
     });
 
-    // Seller: buyer submitted GCash receipt
+    // Seller: buyer submitted GCash receipt — toast only
     socket.on('receiptSubmitted', ({ orderNumber }) => {
-      addNotification({
-        id: Date.now().toString(),
-        type: 'PAYMENT_VERIFICATION',
-        title: 'Receipt Submitted',
-        message: `Buyer submitted GCash receipt for #${orderNumber}`,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
       toast({ title: '📱 GCash receipt submitted', description: `Order #${orderNumber} — please verify` });
     });
 
-    // Buyer: payment approved
+    // Buyer: payment approved — toast only
     socket.on('paymentApproved', ({ orderNumber }) => {
       toast({ title: '✅ Payment Confirmed!', description: `Order #${orderNumber} is now paid.` });
     });
 
-    // Buyer: payment rejected
+    // Buyer: payment rejected — toast only
     socket.on('paymentRejected', ({ reason }) => {
       toast({ title: '❌ Payment Rejected', description: reason || 'Please re-upload your receipt.', variant: 'destructive' });
     });
 
-    // Buyer: pickup order is ready
+    // Buyer: pickup order is ready — toast only
     socket.on('readyForPickup', ({ orderNumber }) => {
-      addNotification({
-        id: Date.now().toString(),
-        type: 'ORDER_STATUS_UPDATE',
-        title: 'Ready for Pickup!',
-        message: `Order #${orderNumber} is ready for pickup.`,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      });
       toast({ title: '🛍️ Ready for Pickup!', description: `Order #${orderNumber} — please come to the store.` });
     });
 

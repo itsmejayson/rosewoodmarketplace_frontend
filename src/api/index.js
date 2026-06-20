@@ -168,4 +168,12 @@ export const adminAPI = {
   cleanupStore: (sellerId) => api.delete(`/admin/sellers/${sellerId}/cleanup`),
   forceCancelOrder: (id, reason) => api.post(`/admin/orders/${id}/force-cancel`, { reason }),
   clearUserCart: (userId) => api.delete(`/admin/users/${userId}/cart`),
+  listReports: (params) => api.get('/admin/reports', { params }),
+  updateReport: (id, data) => api.patch(`/admin/reports/${id}`, data),
+};
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+export const reportAPI = {
+  submit: (formData) => api.post('/reports', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  my: () => api.get('/reports/my'),
 };

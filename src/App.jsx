@@ -41,6 +41,8 @@ import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 import AdminPendingSellersPage from './pages/admin/AdminPendingSellersPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AdminStoreManagePage from './pages/admin/AdminStoreManagePage';
+import AdminReportsPage from './pages/admin/AdminReportsPage';
+import ReportIssuePage from './pages/ReportIssuePage';
 import PendingApprovalPage from './pages/PendingApprovalPage';
 import FAQPage from './pages/FAQPage';
 
@@ -123,9 +125,11 @@ export default function App() {
         <Route path="/admin/pending-sellers" element={<PrivateRoute roles={['ADMIN']}><AdminPendingSellersPage /></PrivateRoute>} />
         <Route path="/admin/settings" element={<PrivateRoute roles={['ADMIN']}><AdminSettingsPage /></PrivateRoute>} />
         <Route path="/admin/stores" element={<PrivateRoute roles={['ADMIN']}><AdminStoreManagePage /></PrivateRoute>} />
+        <Route path="/admin/reports" element={<PrivateRoute roles={['ADMIN']}><AdminReportsPage /></PrivateRoute>} />
         {/* Shared */}
         <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+        <Route path="/report-issue" element={<PrivateRoute><ReportIssuePage /></PrivateRoute>} />
 
         <Route path="*" element={
           <div className="container mx-auto px-4 py-20 text-center">
