@@ -31,11 +31,11 @@ Toast.displayName = ToastPrimitive.Root.displayName;
 const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
   <ToastPrimitive.Close
     ref={ref}
-    className={cn('absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 group-hover:opacity-100', className)}
+    className={cn('absolute right-2 top-2 rounded-md p-1.5 text-foreground/70 opacity-100 transition-colors hover:bg-black/10 hover:text-foreground focus:opacity-100', className)}
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <X className="h-5 w-5" />
   </ToastPrimitive.Close>
 ));
 ToastClose.displayName = ToastPrimitive.Close.displayName;
@@ -69,7 +69,7 @@ const dispatch = (action) => {
 export const toast = ({ title, description, variant }) => {
   const id = genId();
   dispatch({ type: 'ADD', toast: { id, title, description, variant, open: true } });
-  setTimeout(() => dispatch({ type: 'REMOVE', id }), 5000);
+  setTimeout(() => dispatch({ type: 'REMOVE', id }), 2500);
   return id;
 };
 

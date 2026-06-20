@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader2, RotateCcw, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { refundAPI } from '../../api';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -16,6 +16,7 @@ const STATUS_STYLES = {
 const FILTERS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED'];
 
 export default function SellerRefundsPage() {
+  const navigate = useNavigate();
   const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
@@ -81,6 +82,12 @@ export default function SellerRefundsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <RotateCcw className="h-6 w-6" />

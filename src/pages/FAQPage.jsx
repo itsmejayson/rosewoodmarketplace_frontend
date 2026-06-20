@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, ShoppingCart, Store, CreditCard, Package, RotateCcw, Shield, User, Star, MapPin, Heart } from 'lucide-react';
+import { ChevronDown, ShoppingCart, Store, CreditCard, Package, RotateCcw, Shield, User, Star, MapPin, Heart, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const SECTIONS = [
   {
@@ -222,12 +223,19 @@ function FAQItem({ q, a }) {
 }
 
 export default function FAQPage() {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState(SECTIONS[0].label);
 
   const section = SECTIONS.find((s) => s.label === activeSection);
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-4xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div className="text-center mb-10">
         <h1 className="text-3xl font-bold mb-2">Frequently Asked Questions</h1>
         <p className="text-muted-foreground">Everything you need to know about Rosewood Marketplace.</p>

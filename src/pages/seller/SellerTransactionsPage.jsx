@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Banknote, Smartphone } from 'lucide-react';
+import { CreditCard, Banknote, Smartphone, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -19,6 +20,7 @@ const STATUS_COLOR = {
 const METHOD_ICON = { CASH: Banknote, GCASH: Smartphone };
 
 export default function SellerTransactionsPage() {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
   const [meta, setMeta] = useState({ total: 0, pages: 1, page: 1 });
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +46,12 @@ export default function SellerTransactionsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-6">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div>
         <h1 className="text-2xl font-bold">Transactions</h1>
         <p className="text-muted-foreground text-sm">{meta.total} total transactions</p>

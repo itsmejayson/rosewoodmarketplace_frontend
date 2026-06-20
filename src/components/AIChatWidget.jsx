@@ -138,10 +138,39 @@ const KB = [
 
 const FALLBACK = "I'm not sure about that. Try browsing the FAQ page for detailed answers, or ask a more specific question about buying, selling, orders, or payments on Rosewood Marketplace.";
 
+/**
+ * tokenize(text)
+ *
+ * Normalises a string into an array of lowercase word tokens by:
+ *   1. Converting to lowercase for case-insensitive matching.
+ *   2. Replacing all non-alphanumeric characters with spaces (strips
+ *      punctuation so "GCash?" and "GCash" both tokenise to ["gcash"]).
+ *   3. Splitting on whitespace and removing empty strings.
+ *
+ * Used by findAnswer for both the user question and each keyword phrase.
+ */
 function tokenize(text) {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
 }
 
+/**
+ * findAnswer(question)
+ *
+ * Scores every KB entry against the user's question using a simple
+ * keyword-overlap heuristic:
+ *   - For each keyword phrase in an entry, check whether ALL tokens of
+ *     that phrase appear in the tokenised question.
+ *   - If they do, add the phrase's token count to the entry's score.
+ *     Longer phrases score higher than single words, so a match for
+ *     "gcash receipt screenshot upload" beats a match for "gcash" alone —
+ *     this prevents the wrong (more generic) entry from winning.
+ *
+ * Returns the answer text of the highest-scoring entry, or FALLBACK if
+ * no entry scored at least 1 point.
+ *
+ * This approach is intentionally lightweight (no external NLP library) so
+ * the widget works entirely offline once the page has loaded.
+ */
 function findAnswer(question) {
   const tokens = tokenize(question);
   let best = null;
@@ -215,29 +244,71 @@ function TypingIndicator() {
   );
 }
 
+/**
+ * AIChatWidget
+ *
+ * A floating AI-powered FAQ chatbot rendered as a fixed FAB in the bottom-
+ * right corner of every page.  The widget is knowledge-base–driven (no
+ * external API calls) so it works instantly and cannot incur extra cost.
+ *
+ * Visibility is controlled by the admin's `aiAssistantEnabled` setting
+ * fetched from /api/settings on mount.  When disabled the component returns
+ * null so it has zero DOM footprint.
+ */
 export default function AIChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
+  // Whether the admin has enabled the AI assistant in system settings
   const [enabled, setEnabled] = useState(true);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
+  /**
+   * On mount, check whether the admin has enabled the AI assistant.
+   * We default to `enabled: true` so the widget shows immediately while the
+   * request is in flight — hiding it after the fact is less jarring than
+   * a delayed appearance.
+   */
   useEffect(() => {
     adminAPI.getSettings()
       .then(({ data }) => { if (data?.data?.aiAssistantEnabled === false) setEnabled(false); })
       .catch(() => {});
   }, []);
 
+  /**
+   * Auto-focus the textarea when the chat opens so the user can type
+   * immediately without an extra click.  The 120 ms delay gives the CSS
+   * transition time to finish so focus doesn't interfere with the animation.
+   */
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 120);
   }, [open]);
 
+  /**
+   * Scroll to the bottom of the message list whenever a new message is added
+   * or the typing indicator appears/disappears.
+   */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, thinking]);
 
+  /**
+   * send(text?)
+   *
+   * Processes a user message.  `text` is provided when a suggestion button is
+   * clicked; otherwise the value from the textarea (input state) is used.
+   *
+   * Flow:
+   *   1. Append the user message to the conversation.
+   *   2. Show the typing indicator (setThinking(true)).
+   *   3. After 600 ms (simulates thinking) look up the answer in the KB.
+   *   4. Append the assistant reply and hide the typing indicator.
+   *
+   * The 600 ms delay is intentional — it makes the bot feel more natural and
+   * gives the user time to read their own message before the reply appears.
+   */
   const send = (text) => {
     const question = (text ?? input).trim();
     if (!question || thinking) return;
@@ -247,7 +318,7 @@ export default function AIChatWidget() {
     setMessages((prev) => [...prev, userMsg]);
     setThinking(true);
 
-    // Small delay so the typing indicator is visible
+    // Small delay so the typing indicator is visible before the answer appears
     setTimeout(() => {
       const answer = findAnswer(question);
       setMessages((prev) => [...prev, { role: 'assistant', content: answer }]);
@@ -255,8 +326,14 @@ export default function AIChatWidget() {
     }, 600);
   };
 
+  /** Resets the conversation back to the welcome message. */
   const reset = () => { setMessages([WELCOME]); setInput(''); };
 
+  /**
+   * handleKey — submits on Enter (without Shift) so the textarea behaves like
+   * a single-line input for quick questions while still allowing Shift+Enter
+   * for multi-line input.
+   */
   const handleKey = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   };

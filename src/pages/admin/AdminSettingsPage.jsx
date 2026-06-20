@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bot, ToggleLeft, ToggleRight, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Bot, ToggleLeft, ToggleRight, Loader2, AlertTriangle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { adminAPI } from '../../api';
 import { toast } from '../../components/ui/toast';
@@ -33,6 +34,7 @@ function ToggleRow({ icon: Icon, iconBg, iconColor, title, subtitle, enabled, lo
 }
 
 export default function AdminSettingsPage() {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(null); // key of the setting being saved
 
@@ -60,6 +62,12 @@ export default function AdminSettingsPage() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
         <h1 className="text-xl font-bold text-gray-900 mb-6">System Settings</h1>
 
         <Card>

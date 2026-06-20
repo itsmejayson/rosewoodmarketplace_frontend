@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { addressAPI } from '../../api';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { toast } from '../../components/ui/toast';
-import { Loader2, MapPin, Plus, Pencil, Trash2, Star, X, Check } from 'lucide-react';
+import { Loader2, MapPin, Plus, Pencil, Trash2, Star, X, Check, ArrowLeft } from 'lucide-react';
 
 const emptyForm = { label: '', fullName: '', phone: '', state: '', address: '', city: '', isDefault: false };
 
@@ -17,6 +18,7 @@ function formatAddress(addr) {
 }
 
 export default function SavedAddressesPage() {
+  const navigate = useNavigate();
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -116,6 +118,12 @@ export default function SavedAddressesPage() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-xl font-bold text-gray-900">Saved Addresses</h1>
           <button

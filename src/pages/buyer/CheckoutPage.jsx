@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Banknote, Smartphone, ShoppingBag, CheckCircle, Truck, Store, X, AlertCircle, MapPin, Check } from 'lucide-react';
+import { Loader2, Banknote, Smartphone, ShoppingBag, CheckCircle, Truck, Store, X, AlertCircle, MapPin, Check, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -53,6 +53,18 @@ const FULFILLMENT_TYPES = [
   },
 ];
 
+/**
+ * resolveUnitPrice(item)
+ *
+ * Returns the effective unit price for a cart item.
+ *
+ * When a buyer adds a product with variants, the computed price (base price +
+ * variant modifiers) is stored on selectedOptions.unitPrice at add-to-cart
+ * time.  If that field is present we use it directly so the checkout total
+ * matches what the buyer saw in their cart.  Falling back to product.price
+ * covers items added without variants (or items from before this field was
+ * introduced).
+ */
 function resolveUnitPrice(item) {
   return item.selectedOptions?.unitPrice != null
     ? parseFloat(item.selectedOptions.unitPrice)
@@ -118,6 +130,16 @@ export default function CheckoutPage() {
     resolver: zodResolver(isPickup ? pickupSchema : deliverySchema),
   });
 
+  /**
+   * applyAddress(a)
+   *
+   * Populates the react-hook-form fields with the values from a SavedAddress
+   * object.  Called both when the component loads (auto-selecting the default
+   * address) and when the buyer manually picks a saved address.
+   *
+   * Using setValue rather than resetting the whole form preserves any other
+   * field values the buyer may have typed manually (e.g. notes).
+   */
   const applyAddress = (a) => {
     setValue('shippingName', a.fullName || '');
     setValue('shippingPhone', a.phone || '');
@@ -126,18 +148,50 @@ export default function CheckoutPage() {
     setValue('shippingCity', a.city || '');
   };
 
+  /**
+   * selectAddress(addr)
+   *
+   * Handles the buyer clicking on a saved address in the address picker.
+   * Clears the "Save this address" checkbox because the address is already
+   * saved — we don't want to create a duplicate.
+   */
   const selectAddress = (addr) => {
     setSelectedAddressId(addr.id);
     applyAddress(addr);
     setSaveAddress(false); // no need to save an already-saved address
   };
 
-  // Filter to exactly the items the buyer selected in the cart
+  /**
+   * checkoutItems
+   *
+   * Filters the full cart down to only the items the buyer selected for this
+   * checkout session.
+   *
+   * Two selection modes are supported:
+   *   - `itemIds` (array of cart item IDs) — used when the buyer checks out
+   *     specific items (partial cart checkout, future feature).
+   *   - `sellerIds` (array of seller IDs) — used when the buyer checks out
+   *     all items from one or more sellers at once (current cart flow).
+   */
   const checkoutItems = (cart?.cartItems ?? []).filter((i) =>
     itemIds ? itemIds.includes(i.id) : sellerIds.includes(i.product.seller?.id)
   );
 
-  // Per-store groups for display
+  /**
+   * storeGroups
+   *
+   * Groups checkout items by seller and computes per-store totals.
+   *
+   * For each seller the delivery fee is determined as follows:
+   *   - PICKUP orders: always ₱0 (buyer collects in person).
+   *   - DELIVERY, subtotal ≥ freeDeliveryThreshold: ₱0 (free delivery).
+   *   - DELIVERY, subtotal < threshold (or no threshold set): use the
+   *     seller's defaultDeliveryFee.
+   *
+   * Note: these are the *estimated* delivery fees shown at checkout.  The
+   * seller can override the fee when they confirm the order, so the buyer
+   * will see the final total on the order detail page.
+   */
   const storeGroups = sellerIds.map((sid) => {
     const items = checkoutItems.filter((i) => i.product.seller?.id === sid);
     const info = sellerInfoMap[sid] ?? { storeName: 'Unknown Store', defaultDeliveryFee: 0, freeDeliveryThreshold: null };
@@ -156,6 +210,17 @@ export default function CheckoutPage() {
   const grandTotal = grandSubtotal + (isPickup ? 0 : grandDeliveryFee);
   const totalItemCount = checkoutItems.reduce((s, i) => s + i.quantity, 0);
 
+  /**
+   * onSubmit (react-hook-form submit handler)
+   *
+   * Runs zod validation (deliverySchema or pickupSchema depending on
+   * fulfillmentType) before opening the confirmation modal.  The validated
+   * form data is stashed in `pendingData` so handleConfirmOrder can use it
+   * once the buyer confirms.
+   *
+   * We show a confirmation modal rather than submitting immediately so the
+   * buyer has one last chance to review the order summary before committing.
+   */
   const onSubmit = (data) => {
     if (!checkoutItems.length) {
       toast({ title: 'No items to checkout', variant: 'destructive' });
@@ -165,6 +230,28 @@ export default function CheckoutPage() {
     setShowConfirm(true);
   };
 
+  /**
+   * handleConfirmOrder
+   *
+   * Executes the actual checkout after the buyer confirms in the modal.
+   *
+   * Key design decisions:
+   *
+   * 1. Address saving is fire-and-forget (inner try/catch suppressed) — a
+   *    failed address save should never block a successful order placement.
+   *
+   * 2. One API call is made per store group (sequential, not parallel) to
+   *    allow the server to process each order atomically without race
+   *    conditions on shared cart/stock state.
+   *
+   * 3. After all orders are placed the cart is re-fetched so the badge count
+   *    updates and the cart page reflects the cleared items.
+   *
+   * 4. Navigation differs based on how many orders were created:
+   *    - Single order → go straight to that order's detail page.
+   *    - Multiple orders → go to the orders list so the buyer can see all of
+   *      them at once.
+   */
   const handleConfirmOrder = async () => {
     setShowConfirm(false);
     setIsSubmitting(true);
@@ -182,6 +269,7 @@ export default function CheckoutPage() {
         } catch {} // non-blocking — don't fail the order if address save fails
       }
 
+      // Create one order per store group (sequential to avoid stock race conditions)
       const results = [];
       for (const group of storeGroups) {
         const { data: res } = await orderAPI.checkout({
@@ -349,6 +437,12 @@ export default function CheckoutPage() {
     )}
 
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <h1 className="text-2xl font-bold mb-6">Checkout</h1>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

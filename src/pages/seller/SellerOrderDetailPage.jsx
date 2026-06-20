@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Truck, Store, X, RotateCcw, Bell } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Truck, Store, X, RotateCcw, Bell, Bike } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { orderAPI, refundAPI } from '../../api';
@@ -12,6 +12,23 @@ import TransactionChat from '../../components/chat/TransactionChat';
 // Pickup flow:   PAID → PROCESSING (ready) → DELIVERED (picked up)
 const NEXT_STATUS_DELIVERY = { PAID: 'PROCESSING', PROCESSING: 'SHIPPED', SHIPPED: 'DELIVERED' };
 const NEXT_STATUS_PICKUP   = { PROCESSING: 'DELIVERED' };
+
+const EVENT_LABELS = {
+  ORDER_CREATED: 'Order Placed',
+  ORDER_CONFIRMED: 'Order Confirmed',
+  STATUS_AWAITING_PAYMENT: 'Awaiting Payment',
+  STATUS_PAID: 'Payment Confirmed',
+  STATUS_PROCESSING: 'Order Processing',
+  STATUS_SHIPPED: 'Order Shipped',
+  STATUS_DELIVERED: 'Order Delivered',
+  PICKUP_READY: 'Ready for Pickup — Buyer Notified',
+  ORDER_PICKED_UP: 'Order Picked Up by Buyer',
+  PAYMENT_APPROVED: 'Payment Approved',
+  PAYMENT_REJECTED: 'Payment Rejected',
+  DELIVERY_FEE_SET: 'Delivery Fee Added',
+  DELIVERY_FEE_PAID: 'Delivery Fee Paid',
+  ORDER_CANCELLED: 'Order Cancelled',
+};
 
 export default function SellerOrderDetailPage() {
   const { id } = useParams();
@@ -456,7 +473,7 @@ export default function SellerOrderDetailPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0 pb-4">
-                    <p className="font-medium">{log.event ? log.event.replace(/_/g, ' ') : 'Event'}</p>
+                    <p className="font-medium">{log.event ? (EVENT_LABELS[log.event] || log.event.replace(/_/g, ' ')) : 'Event'}</p>
                     {log.description && <p className="text-muted-foreground text-xs mt-0.5">{log.description}</p>}
                     <p className="text-xs text-muted-foreground mt-0.5">{formatDate(log.createdAt)}</p>
                   </div>

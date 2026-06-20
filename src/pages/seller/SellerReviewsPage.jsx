@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, Star, MessageSquare } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader2, Star, MessageSquare, ArrowLeft } from 'lucide-react';
 import { reviewAPI } from '../../api';
 import { Card, CardContent } from '../../components/ui/card';
 import { formatDate } from '../../lib/utils';
@@ -22,6 +22,7 @@ function StarRating({ rating }) {
 }
 
 export default function SellerReviewsPage() {
+  const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
@@ -49,6 +50,12 @@ export default function SellerReviewsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <h1 className="text-2xl font-bold flex items-center gap-2 mb-2">
         <Star className="h-6 w-6" />
         Product Reviews

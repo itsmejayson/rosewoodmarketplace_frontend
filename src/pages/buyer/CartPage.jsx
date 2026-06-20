@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Loader2, Store } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Loader2, Store, ArrowLeft } from 'lucide-react';
+import { Button } from '../../components/ui/button';
 import useCartStore from '../../store/cartStore';
 import { formatCurrency } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
@@ -127,6 +128,12 @@ export default function CartPage() {
   return (
     <div className="bg-gray-50 min-h-screen">
     <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <h1 className="text-xl font-bold mb-4 text-gray-900">My Cart <span className="text-base font-normal text-gray-400">({cart.itemCount} items)</span></h1>
 
       {/* Select-all toolbar */}

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, ShoppingBag, CreditCard, AlertTriangle, ChevronRight, Clock, RotateCcw } from 'lucide-react';
+import { Bell, CheckCheck, ShoppingBag, CreditCard, AlertTriangle, ChevronRight, Clock, RotateCcw, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '../components/ui/skeleton';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -73,6 +73,12 @@ export default function NotificationsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Notifications</h1>
@@ -116,7 +122,7 @@ export default function NotificationsPage() {
                 className={[
                   'transition-all',
                   clickable ? 'cursor-pointer hover:shadow-md hover:border-rosewood-200' : '',
-                  !n.isRead ? 'border-rosewood-200 bg-rosewood-50/40' : '',
+                  !n.isRead ? 'border-l-4 border-l-rosewood-600 border-rosewood-300 bg-rosewood-100' : '',
                 ].join(' ')}
               >
                 <CardContent className="p-4">
@@ -150,7 +156,7 @@ export default function NotificationsPage() {
                     {/* Right side */}
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
                       {!n.isRead && (
-                        <div className="h-2 w-2 rounded-full bg-rosewood-500 mt-1" />
+                        <div className="h-2.5 w-2.5 rounded-full bg-rosewood-500 mt-1 ring-2 ring-rosewood-200" />
                       )}
                       {clickable && (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />

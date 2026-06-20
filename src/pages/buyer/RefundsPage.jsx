@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Loader2, RotateCcw } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader2, RotateCcw, ArrowLeft } from 'lucide-react';
 import { refundAPI } from '../../api';
 import { Card, CardContent } from '../../components/ui/card';
 import { formatDate } from '../../lib/utils';
@@ -13,6 +13,7 @@ const STATUS_STYLES = {
 };
 
 export default function RefundsPage() {
+  const navigate = useNavigate();
   const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,6 +54,12 @@ export default function RefundsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <h1 className="text-2xl font-bold mb-6">My Refunds</h1>
 
       {refunds.length === 0 ? (

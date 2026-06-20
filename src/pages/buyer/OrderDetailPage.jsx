@@ -9,7 +9,9 @@ import { formatCurrency, formatDate, ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS 
 import GcashPaymentPanel from '../../components/payment/GcashPaymentPanel';
 import CashPaymentPanel from '../../components/payment/CashPaymentPanel';
 import TransactionChat from '../../components/chat/TransactionChat';
-const STATUS_STEPS = ['PENDING', 'AWAITING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+const DELIVERY_STEPS = ['PENDING', 'AWAITING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+const PICKUP_STEPS   = ['AWAITING_PAYMENT', 'PAID', 'PROCESSING', 'DELIVERED'];
+
 const STATUS_ICONS = {
   PENDING: Clock,
   AWAITING_PAYMENT: CreditCard,
@@ -19,13 +21,40 @@ const STATUS_ICONS = {
   DELIVERED: CheckCircle,
   CANCELLED: XCircle,
 };
-const STATUS_LABELS = {
+const DELIVERY_LABELS = {
   PENDING: 'Pending',
   AWAITING_PAYMENT: 'Pay Now',
   PAID: 'Paid',
   PROCESSING: 'Processing',
   SHIPPED: 'Shipped',
   DELIVERED: 'Delivered',
+};
+const PICKUP_LABELS = {
+  AWAITING_PAYMENT: 'Pay Now',
+  PAID: 'Paid',
+  PROCESSING: 'Ready',
+  DELIVERED: 'Picked Up',
+};
+
+// Human-readable labels for activity log events
+const EVENT_LABELS = {
+  ORDER_CREATED: 'Order Placed',
+  ORDER_CONFIRMED: 'Order Confirmed by Seller',
+  STATUS_AWAITING_PAYMENT: 'Awaiting Payment',
+  STATUS_PAID: 'Payment Confirmed',
+  STATUS_PROCESSING: 'Order Processing',
+  STATUS_SHIPPED: 'Order Shipped',
+  STATUS_DELIVERED: 'Order Delivered',
+  PICKUP_READY: 'Ready for Pickup',
+  ORDER_PICKED_UP: 'Order Picked Up',
+  PAYMENT_APPROVED: 'Payment Approved',
+  PAYMENT_REJECTED: 'Payment Rejected',
+  DELIVERY_FEE_SET: 'Delivery Fee Added',
+  DELIVERY_FEE_PAID: 'Delivery Fee Paid',
+  ORDER_CANCELLED: 'Order Cancelled',
+  REFUND_REQUESTED: 'Refund Requested',
+  REFUND_APPROVED: 'Refund Approved',
+  REFUND_REJECTED: 'Refund Rejected',
 };
 
 export default function OrderDetailPage() {
@@ -59,6 +88,9 @@ export default function OrderDetailPage() {
   if (!order) return <div className="container mx-auto px-4 py-20 text-center"><p>Order not found.</p></div>;
 
   const tx = order.transaction;
+  const isPickup = order.fulfillmentType === 'PICKUP';
+  const STATUS_STEPS = isPickup ? PICKUP_STEPS : DELIVERY_STEPS;
+  const STATUS_LABELS = isPickup ? PICKUP_LABELS : DELIVERY_LABELS;
   const currentStep = STATUS_STEPS.indexOf(order.status);
   const canCancel = ['PENDING', 'AWAITING_PAYMENT'].includes(order.status);
   const canPay = order.status === 'AWAITING_PAYMENT';
@@ -409,7 +441,7 @@ export default function OrderDetailPage() {
                           {!isLast && <div className="w-px flex-1 bg-border my-1" />}
                         </div>
                         <div className="flex-1 min-w-0 pb-4">
-                          <p className="font-medium text-sm">{log.event ? log.event.replace(/_/g, ' ') : 'Event'}</p>
+                          <p className="font-medium text-sm">{log.event ? (EVENT_LABELS[log.event] || log.event.replace(/_/g, ' ')) : 'Event'}</p>
                           {log.description && <p className="text-sm text-muted-foreground mt-0.5">{log.description}</p>}
                           <p className="text-xs text-muted-foreground mt-0.5">{formatDate(log.createdAt)}</p>
                         </div>

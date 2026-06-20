@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, Store, Phone, Mail, RefreshCw, FileText, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Store, Phone, Mail, RefreshCw, FileText, ExternalLink, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../../hooks/useSocket';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Button } from '../../components/ui/button';
@@ -10,6 +11,7 @@ import { formatDate } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
 
 export default function AdminPendingSellersPage() {
+  const navigate = useNavigate();
   const [sellers, setSellers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionId, setActionId] = useState(null);
@@ -52,6 +54,12 @@ export default function AdminPendingSellersPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Pending Seller Approvals</h1>

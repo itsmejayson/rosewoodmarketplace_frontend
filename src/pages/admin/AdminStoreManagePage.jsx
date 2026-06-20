@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Store, Package, Trash2, Search, Loader2, AlertTriangle, ChevronRight,
-  ShoppingBag, RefreshCw, Eye,
+  ShoppingBag, RefreshCw, Eye, ArrowLeft,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
@@ -141,6 +141,7 @@ function SellerProductList({ seller, onBack }) {
 
 // ── Main: list all stores ──────────────────────────────────────────────────────
 export default function AdminStoreManagePage() {
+  const navigate = useNavigate();
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -178,6 +179,12 @@ export default function AdminStoreManagePage() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-6 max-w-2xl">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-xl font-bold text-gray-900">Store Management</h1>
           <button onClick={loadSellers} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-gray-200 transition-colors">

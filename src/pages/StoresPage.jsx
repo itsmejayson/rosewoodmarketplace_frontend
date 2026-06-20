@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Store, Search, Package } from 'lucide-react';
+import { Store, Search, Package, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -8,6 +9,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { storeAPI } from '../api';
 
 export default function StoresPage() {
+  const navigate = useNavigate();
   const [stores, setStores] = useState([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +42,12 @@ export default function StoresPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-1">Stores</h1>
         <p className="text-muted-foreground">Browse all stores on RP Market</p>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Wifi, Store, ShoppingBag, Shield, RefreshCw } from 'lucide-react';
+import { Wifi, Store, ShoppingBag, Shield, RefreshCw, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -15,6 +16,7 @@ const ROLE_COLOR = {
 };
 
 export default function AdminOnlinePage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -51,6 +53,12 @@ export default function AdminOnlinePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl space-y-6">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Heart, Loader2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Loader2, ArrowLeft } from 'lucide-react';
 import { favoriteAPI } from '../../api';
 import { formatCurrency } from '../../lib/utils';
 import { Card, CardContent } from '../../components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/button';
 import { toast } from '../../components/ui/toast';
 
 export default function FavoritesPage() {
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,6 +86,12 @@ export default function FavoritesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <h1 className="text-2xl font-bold mb-6">My Favorites</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
         {favorites.map((fav) => {

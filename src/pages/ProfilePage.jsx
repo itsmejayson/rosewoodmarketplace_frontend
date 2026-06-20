@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Lock, Camera, Loader2, Store, Bell, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Camera, Loader2, Store, Bell, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -29,6 +30,7 @@ const passwordSchema = z.object({
 });
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
   const [profileMsg, setProfileMsg] = useState(null);
   const [passwordMsg, setPasswordMsg] = useState(null);
@@ -90,6 +92,12 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl space-y-6">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <h1 className="text-2xl font-bold">My Profile</h1>
 
       {/* Avatar */}

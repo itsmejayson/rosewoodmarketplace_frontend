@@ -12,9 +12,15 @@ export default function SellerOrderCard({ order }) {
 
   return (
     <Card
-      className={`cursor-pointer transition-shadow hover:shadow-md ${needsAction ? 'border-blue-300 bg-blue-50/30' : ''}`}
+      className={`cursor-pointer transition-shadow hover:shadow-md ${needsAction ? 'border-amber-500 bg-amber-100 shadow-amber-200 shadow-md ring-1 ring-amber-400' : ''}`}
       onClick={() => navigate(`/seller/orders/${order.id}`)}
     >
+      {needsAction && (
+        <div className="bg-amber-400 px-4 py-1.5 flex items-center gap-2">
+          <span className="animate-pulse text-sm">⚡</span>
+          <span className="text-xs font-bold text-amber-900 tracking-wide uppercase">Action Required</span>
+        </div>
+      )}
       <CardContent className="p-4">
         <div className="flex flex-wrap items-start gap-4 justify-between">
           <div className="min-w-0 flex-1">
@@ -32,11 +38,6 @@ export default function SellerOrderCard({ order }) {
                 }`}>
                   {tx.paymentMethod === 'GCASH' ? <Smartphone className="h-3 w-3" /> : <Banknote className="h-3 w-3" />}
                   {tx.paymentStatus}
-                </span>
-              )}
-              {needsAction && (
-                <span className="animate-pulse inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold bg-blue-600 text-white">
-                  ⚡ Action needed
                 </span>
               )}
             </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { CheckCircle, Package, Loader2 } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { CheckCircle, Package, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { orderAPI } from '../../api';
@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '../../lib/utils';
 
 export default function CheckoutSuccessPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const orderId = searchParams.get('order_id');
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +27,12 @@ export default function CheckoutSuccessPage() {
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back
+      </button>
       <div className="flex justify-center mb-4">
         <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center">
           <CheckCircle className="h-10 w-10 text-green-600" />
