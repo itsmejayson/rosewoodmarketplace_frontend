@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ShoppingCart, Store, CreditCard, Package, RotateCcw, Shield, User, Star, MapPin, Heart, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ShoppingCart, Store, CreditCard, Package, RotateCcw, Shield, User, Star, MapPin, Heart, ArrowLeft, Flag, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const SECTIONS = [
@@ -20,6 +20,10 @@ const SECTIONS = [
         q: 'Is Rosewood Marketplace available on mobile?',
         a: 'Yes. The website is fully responsive and works on any mobile browser. Product galleries, store listings, and the marketplace all support horizontal swipe carousels on mobile devices.',
       },
+      {
+        q: 'Can I share a product with someone?',
+        a: 'Yes. On any product detail page tap the Share button (share icon) next to the heart. On mobile it opens the native share sheet so you can send via WhatsApp, Messenger, copy link, etc. On desktop it copies the product link to your clipboard.',
+      },
     ],
   },
   {
@@ -32,12 +36,16 @@ const SECTIONS = [
         a: 'Click "Register" on the navigation bar, fill in your name, email, password, and phone number, then select "Buyer" as your role. Your account is active immediately — no approval required.',
       },
       {
-        q: 'Can I buy from multiple sellers in one order?',
-        a: 'Currently your cart can only contain products from one seller at a time. If you try to add a product from a different seller, you will be asked to clear your cart first.',
+        q: 'Can I buy from multiple sellers in one checkout?',
+        a: 'Yes. Your cart can hold products from multiple sellers. On the Cart page, select the items you want (using checkboxes per item or per store) and the Order Summary will show a breakdown per store. When you checkout, a separate order is created for each seller automatically.',
+      },
+      {
+        q: 'How do I remove multiple items from my cart at once?',
+        a: 'On the Cart page, check the items you want to remove using the checkboxes, then click the "Remove" button in the toolbar at the top. You can also use "Select all" to remove everything at once.',
       },
       {
         q: 'How does stock work? Can a product sell out while I\'m shopping?',
-        a: 'Yes. Stock is reserved the moment you add a product to your cart — not at checkout. This means other buyers cannot purchase the same units you have reserved. If you remove an item or clear your cart, the reserved stock is returned.',
+        a: 'Yes. Stock is reserved the moment you add a product to your cart. This means other buyers cannot purchase the same units you have reserved. If you remove an item or clear your cart, the reserved stock is returned. The marketplace now shows the remaining stock count on every product card so you can see availability at a glance.',
       },
       {
         q: 'What payment methods are accepted?',
@@ -45,7 +53,7 @@ const SECTIONS = [
       },
       {
         q: 'What is the difference between Delivery and Pickup?',
-        a: 'Delivery means the seller will deliver the order to your address. Pickup means you collect the order from the seller\'s location. With Pickup, the order skips the seller-confirmation step and goes straight to Awaiting Payment.',
+        a: 'Delivery means the seller will deliver the order to your address. Pickup means you collect the order from the seller\'s location. Pickup orders skip the seller-confirmation step and go straight to Awaiting Payment. The order tracker for pickup shows: Pay Now → Paid → Ready → Picked Up.',
       },
       {
         q: 'How do I pay with GCash?',
@@ -53,11 +61,11 @@ const SECTIONS = [
       },
       {
         q: 'Can I save multiple delivery addresses?',
-        a: 'Yes. Go to "Saved Addresses" in the navigation menu to add, edit, or delete addresses. You can select any saved address during checkout.',
+        a: 'Yes. Go to "Saved Addresses" in the navigation menu to add, edit, or delete addresses. You can also save a new address during checkout by checking "Save this address". At checkout, your saved addresses appear as selectable cards for quick re-use.',
       },
       {
         q: 'How do I track my order?',
-        a: 'Open "My Orders" from the navigation menu. Each order shows its current status: Pending → Awaiting Payment → Paid → Processing → Shipped → Delivered. You also receive notifications at each status change.',
+        a: 'Open "My Orders" from the navigation menu. Delivery orders track: Pending → Awaiting Payment → Paid → Processing → Shipped → Delivered. Pickup orders track: Pay Now → Paid → Ready → Picked Up. You also receive notifications at each status change.',
       },
       {
         q: 'Can I cancel my order?',
@@ -65,7 +73,7 @@ const SECTIONS = [
       },
       {
         q: 'How do I request a refund?',
-        a: 'Open the order detail page for a Paid or Delivered order and click "Request Refund". Provide your reason and submit. The seller will review and approve or reject the request. If approved, your stock is also restored so the products return to inventory.',
+        a: 'Open the order detail page for a Paid or Delivered order and click "Request Refund". Provide your reason and submit. The seller will review and approve or reject the request. If approved, the stock is restored and the order is marked Refunded.',
       },
       {
         q: 'Can I save products to a wishlist?',
@@ -74,6 +82,10 @@ const SECTIONS = [
       {
         q: 'Where can I see my payment history?',
         a: 'Go to "Transactions" in the navigation menu. It lists all your past transactions with order number, store, payment method, status, and amount.',
+      },
+      {
+        q: 'How do I report a bug or issue?',
+        a: 'Go to the account menu (tap your avatar) and select "Report an Issue", or find it at the bottom of your Profile page. Describe the problem and optionally attach a screenshot. Your report is sent to the admin team who will review it and respond.',
       },
     ],
   },
@@ -100,7 +112,7 @@ const SECTIONS = [
       },
       {
         q: 'How does stock management work?',
-        a: 'You set the stock quantity when creating or editing a product. Stock decreases when a buyer adds your product to their cart (reserved instantly) and restores if they remove the item or their cart is cleared. When an order is paid, the sales count increments. You get a low-stock notification when stock reaches 10 or below.',
+        a: 'You set the stock quantity when creating or editing a product. Stock decreases when a buyer adds your product to their cart and restores if they remove the item. When an order is paid, the sales count increments. You get a low-stock notification when stock reaches 10 or below.',
       },
       {
         q: 'How do I confirm a GCash payment?',
@@ -109,6 +121,14 @@ const SECTIONS = [
       {
         q: 'How do I confirm a Cash payment?',
         a: 'Once you have physically received cash from the buyer, open the order detail page and click "Confirm Cash Received". This marks the order as Paid and notifies the buyer.',
+      },
+      {
+        q: 'How does the pickup flow work for sellers?',
+        a: 'For pickup orders, after payment is confirmed and you have prepared the order, click "Notify Buyer — Ready for Pickup" on the order detail page. This sends the buyer a notification. When the buyer picks it up, mark it as Delivered. The activity log tracks all these steps.',
+      },
+      {
+        q: 'Which orders need my immediate attention?',
+        a: 'Orders that need action (e.g. GCash receipt waiting for verification, cash payment pending confirmation) are highlighted with an amber banner at the top of the order card on your orders list — they are easy to spot.',
       },
       {
         q: 'How do I process a refund request?',
@@ -120,11 +140,7 @@ const SECTIONS = [
       },
       {
         q: 'Where can I see my sales performance?',
-        a: 'The Seller Dashboard shows total revenue, order counts, a 30-day daily revenue bar chart, and your top-selling products. The dashboard updates in real time via live notifications and refreshes every 30 seconds as a fallback.',
-      },
-      {
-        q: 'Where do I view my transactions?',
-        a: 'Go to "Transactions" in the navigation menu. It shows all orders with payment method, status, buyer details, amount, and date. You can filter by payment method.',
+        a: 'The Seller Dashboard shows total revenue, order counts, a 30-day daily revenue bar chart, and your top-selling products. The dashboard updates in real time via live notifications.',
       },
       {
         q: 'Can I see reviews for my products?',
@@ -139,7 +155,7 @@ const SECTIONS = [
     faqs: [
       {
         q: 'What are the order statuses?',
-        a: 'Pending (order placed, awaiting seller confirmation) → Awaiting Payment (confirmed by seller or Pickup order) → Paid (payment confirmed) → Processing (seller is preparing the order) → Shipped (order is on its way) → Delivered (order received). Orders can also be Cancelled or Refunded.',
+        a: 'For delivery orders: Pending → Awaiting Payment → Paid → Processing → Shipped → Delivered. For pickup orders: Awaiting Payment → Paid → Processing → Delivered (Picked Up). Orders can also be Cancelled or Refunded.',
       },
       {
         q: 'What are the payment statuses?',
@@ -153,6 +169,10 @@ const SECTIONS = [
         q: 'What happens if a seller rejects my GCash receipt?',
         a: 'You will receive a notification with the rejection reason. You can upload a new receipt from the order detail page, or contact the seller via the in-order chat.',
       },
+      {
+        q: 'What is the activity log on an order?',
+        a: 'Every order has an Activity section that shows a full history of events: when it was placed, when payment was confirmed, when it was shipped or marked ready for pickup, and more. Pickup-specific events like "Ready for Pickup" and "Picked Up" are also tracked here.',
+      },
     ],
   },
   {
@@ -162,7 +182,7 @@ const SECTIONS = [
     faqs: [
       {
         q: 'How do I search for products?',
-        a: 'Go to the Marketplace page. You can search by product name, filter by category, and sort by price or newest. On mobile the product grid becomes a horizontal swipe carousel.',
+        a: 'Go to the Marketplace page. You can search by product name, filter by category, and sort by price or newest. Every product card now shows the remaining stock count so you can see availability before clicking in.',
       },
       {
         q: 'What are product variants and add-ons?',
@@ -176,6 +196,33 @@ const SECTIONS = [
         q: 'Can I see a store\'s full product list?',
         a: 'Yes. Click on any store name to open the Store page, which lists all of that seller\'s available products and their store profile.',
       },
+      {
+        q: 'Can I share a product link?',
+        a: 'Yes. On the product detail page tap the Share icon (next to the heart). On mobile it opens your phone\'s native share sheet. On desktop it copies the URL to your clipboard and shows a checkmark confirmation.',
+      },
+    ],
+  },
+  {
+    label: 'Notifications',
+    icon: Bell,
+    color: 'text-amber-600',
+    faqs: [
+      {
+        q: 'How do I enable push notifications?',
+        a: 'Go to your Profile and scroll to the "Push Notifications" section. Click "Enable" and allow notifications when your browser prompts you. You will then receive real-time alerts even when you are not actively using the app.',
+      },
+      {
+        q: 'What kinds of notifications will I receive?',
+        a: 'Order status updates (placed, paid, shipped, delivered), payment confirmations or rejections, GCash receipt alerts for sellers, pickup-ready alerts, low-stock warnings for sellers, refund updates, new issue report alerts for admins, and system announcements.',
+      },
+      {
+        q: 'How do I view all my notifications?',
+        a: 'Tap the bell icon in the navigation bar to open the Notifications page. Unread notifications are highlighted with a colored left border and a dot indicator. Tap "Mark all read" to clear them all at once, or tap any notification to go directly to the relevant page.',
+      },
+      {
+        q: 'Can I dismiss a notification quickly?',
+        a: 'Toast notifications (the pop-up alerts) auto-dismiss after 2.5 seconds. You can also close them immediately by tapping the X button which is always visible in the top-right corner of the toast.',
+      },
     ],
   },
   {
@@ -188,8 +235,8 @@ const SECTIONS = [
         a: 'Go to "Profile" from the user menu. You can update your full name, phone number, address, and profile photo. Sellers can also update their store name from the profile page.',
       },
       {
-        q: 'How do I enable push notifications?',
-        a: 'Go to your Profile and scroll to the "Push Notifications" section. Click "Enable" and allow notifications when your browser prompts you. You will then receive real-time alerts for order updates, payment confirmations, and messages.',
+        q: 'How do I report a bug or problem?',
+        a: 'Open the account menu (tap your avatar or profile icon) and select "Report an Issue". Describe the problem in the subject and description fields, and optionally attach a screenshot. Your report goes directly to the admin team. You can track your submitted reports and see admin responses under the "My Reports" tab on the same page.',
       },
       {
         q: 'I forgot my password. How do I reset it?',
@@ -198,6 +245,29 @@ const SECTIONS = [
       {
         q: 'Can I change my role from Buyer to Seller?',
         a: 'Role changes are not supported through the app. If you need to register as a seller, create a new account with a different email address and select the Seller role during registration.',
+      },
+    ],
+  },
+  {
+    label: 'Issues & Reports',
+    icon: Flag,
+    color: 'text-red-600',
+    faqs: [
+      {
+        q: 'How do I report a bug or issue?',
+        a: 'Open the account menu and tap "Report an Issue", or find the button at the bottom of your Profile page. Fill in a subject, describe the issue in detail, and optionally attach a screenshot. Your report is sent immediately to the admin team.',
+      },
+      {
+        q: 'Can I track the status of my report?',
+        a: 'Yes. On the Report an Issue page, switch to the "My Reports" tab to see all reports you have submitted. Each one shows its current status: Open, In Progress, Resolved, or Dismissed. If the admin leaves a response or notes, they will appear on your report card.',
+      },
+      {
+        q: 'What happens after I submit a report?',
+        a: 'The admin receives a real-time notification about your report. They can update its status (In Progress, Resolved, Dismissed) and leave notes or a response that you can see on the My Reports tab.',
+      },
+      {
+        q: 'Can admins submit issue reports?',
+        a: 'No. The Report an Issue feature is only available to buyers and sellers. Admins manage and respond to reports from the admin dashboard under "Issue Reports".',
       },
     ],
   },

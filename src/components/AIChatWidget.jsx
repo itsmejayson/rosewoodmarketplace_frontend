@@ -6,21 +6,31 @@ import { adminAPI } from '../api';
 // Each entry has keyword triggers and an answer. Longer / more specific keyword
 // lists are checked first because we score by number of keyword hits.
 const KB = [
+  // ── Registration & Accounts ──────────────────────────────────────────────────
   {
     keywords: ['proof', 'residency', 'document', 'barangay', 'utility', 'bill', 'certificate', 'upload', 'requirement'],
-    answer: 'Sellers must upload a proof of residency when registering — a barangay certificate of residency, utility bill, or any official document showing your current address. Accepted formats: PDF, DOC, DOCX, JPG, PNG (max 10 MB). An admin reviews it before approving your account.',
+    answer: 'Sellers must upload a proof of residency when registering — a barangay certificate, utility bill, or any official document showing your address. Accepted formats: PDF, DOC, DOCX, JPG, PNG (max 10 MB). An admin reviews it before approving your account.',
   },
   {
     keywords: ['seller', 'register', 'sign up', 'apply', 'become', 'approval', 'approved', 'pending'],
-    answer: 'To register as a seller, click Register and choose the Seller role. You must provide your store name and upload a proof of residency document. An admin will review and approve your account. While pending you will see a Pending Approval screen when you log in.',
+    answer: 'To register as a seller, click Register and choose the Seller role. Provide your store name and upload a proof of residency document. An admin will review and approve your account. While pending you will see a Pending Approval screen when you log in.',
   },
   {
     keywords: ['buyer', 'register', 'account', 'create', 'sign up', 'join'],
     answer: 'Creating a buyer account is easy — click Register, fill in your name, email, password, and phone number, then select Buyer. Your account is active immediately with no approval needed.',
   },
   {
+    keywords: ['password', 'forgot password', 'reset password', 'change password'],
+    answer: 'You can change your password from the Profile page. Self-service password reset (via email) is not yet available — contact the marketplace admin for help if you are locked out.',
+  },
+  {
+    keywords: ['role', 'change role', 'buyer to seller', 'seller to buyer'],
+    answer: 'Role changes are not supported in the app. If you need a different role, register a new account with a different email address and select the desired role.',
+  },
+  // ── Payments ─────────────────────────────────────────────────────────────────
+  {
     keywords: ['gcash', 'receipt', 'screenshot', 'upload', 'payment', 'verify', 'verification'],
-    answer: 'For GCash payments: pay in your GCash app, then open your order detail page and upload a screenshot of the receipt. The seller will review it and confirm your payment. You will get a notification once approved.',
+    answer: 'For GCash payments: pay in your GCash app, then open your order detail page and upload a screenshot of the receipt. The seller reviews it and confirms your payment. You will get a notification once approved or rejected.',
   },
   {
     keywords: ['cash', 'cod', 'on delivery', 'cash on'],
@@ -28,107 +38,142 @@ const KB = [
   },
   {
     keywords: ['payment', 'pay', 'method', 'how to pay'],
-    answer: 'Rosewood Marketplace supports two payment methods: GCash (upload a payment receipt screenshot) and Cash (pay on delivery or pickup). Choose your preferred method at checkout.',
+    answer: 'Rosewood Marketplace supports two payment methods: GCash (upload a payment receipt screenshot for seller verification) and Cash (pay on delivery or pickup). Choose at checkout.',
+  },
+  // ── Cart ─────────────────────────────────────────────────────────────────────
+  {
+    keywords: ['cart', 'add to cart', 'basket', 'multiple seller', 'multi store'],
+    answer: 'Your cart can hold products from multiple sellers at once. Use the checkboxes on the Cart page to select which items to checkout. The Order Summary breaks down costs per store, and a separate order is created for each seller when you checkout.',
   },
   {
-    keywords: ['pickup', 'pick up', 'delivery', 'fulfillment', 'deliver'],
-    answer: 'At checkout you choose Delivery (seller delivers to your address) or Pickup (you collect from the seller). Pickup orders skip the seller-confirmation step and go straight to Awaiting Payment.',
+    keywords: ['remove cart', 'delete cart', 'bulk remove', 'select items', 'remove multiple'],
+    answer: 'On the Cart page, tick the checkboxes next to the items you want to remove (or use Select All), then click the Remove button in the toolbar. You can also remove items one at a time with the trash icon.',
+  },
+  // ── Orders ───────────────────────────────────────────────────────────────────
+  {
+    keywords: ['pickup', 'pick up', 'ready for pickup', 'notify pickup'],
+    answer: 'For pickup orders the tracker shows: Awaiting Payment → Paid → Ready → Picked Up. Once you have prepared the order, click "Notify Buyer — Ready for Pickup". The buyer gets a notification and can come to collect. Mark it Delivered once picked up.',
+  },
+  {
+    keywords: ['delivery', 'fulfillment', 'deliver'],
+    answer: 'For delivery orders the tracker shows: Pending → Awaiting Payment → Paid → Processing → Shipped → Delivered. Choose Delivery at checkout and fill in your shipping address.',
   },
   {
     keywords: ['cancel', 'cancellation', 'cancel order'],
-    answer: 'You can cancel an order when its status is Pending or Awaiting Payment. Once the seller confirms payment the order can no longer be cancelled — you would need to request a refund instead.',
+    answer: 'You can cancel an order when its status is Pending or Awaiting Payment. Once the seller confirms payment the order can no longer be cancelled — request a refund instead.',
   },
   {
     keywords: ['refund', 'return', 'money back', 'request refund'],
-    answer: 'To request a refund, open the order detail page for a Paid or Delivered order and click Request Refund. Enter your reason and submit. The seller will approve or reject it. If approved, the stock is restored and the order is marked Refunded.',
-  },
-  {
-    keywords: ['stock', 'inventory', 'out of stock', 'reserve', 'reservation', 'available'],
-    answer: 'Stock is reserved the moment you add a product to your cart — not at checkout. This prevents other buyers from purchasing the same units. If you remove the item or clear your cart the reserved stock is returned. Out-of-stock products cannot be added to cart.',
-  },
-  {
-    keywords: ['cart', 'add to cart', 'basket'],
-    answer: 'Your cart can only hold products from one seller at a time. Adding a product from a different seller will prompt you to clear your cart first. Stock is reserved immediately when you add an item.',
+    answer: 'To request a refund, open the order detail page for a Paid or Delivered order and click Request Refund. Enter your reason and submit. The seller approves or rejects it. If approved, stock is restored and the order is marked Refunded.',
   },
   {
     keywords: ['order', 'track', 'status', 'where is my order', 'order status'],
-    answer: 'Open My Orders from the navigation menu to track your orders. Statuses go: Pending → Awaiting Payment → Paid → Processing → Shipped → Delivered. You receive a notification at each status change.',
+    answer: 'Open My Orders from the navigation menu to track your orders. Delivery: Pending → Awaiting Payment → Paid → Processing → Shipped → Delivered. Pickup: Awaiting Payment → Paid → Ready → Picked Up. You receive a notification at each stage.',
+  },
+  {
+    keywords: ['activity', 'activity log', 'order history', 'timeline'],
+    answer: 'Every order has an Activity section showing a full timeline: when it was placed, payment confirmed, shipped, ready for pickup, picked up, and more. This is visible on the order detail page for both buyers and sellers.',
   },
   {
     keywords: ['checkout', 'place order', 'how to order', 'buy'],
-    answer: 'To place an order: browse the Marketplace → add items to cart → go to Cart → click Proceed to Checkout → fill in your delivery details, choose Delivery or Pickup, select a payment method, and confirm your order.',
+    answer: 'To place an order: browse the Marketplace → add items to cart → go to Cart → select the items to buy → click Proceed to Checkout → fill in delivery details, choose Delivery or Pickup, select a payment method, and confirm.',
+  },
+  // ── Stock & Products ─────────────────────────────────────────────────────────
+  {
+    keywords: ['stock', 'inventory', 'out of stock', 'reserve', 'reservation', 'available', 'how many left'],
+    answer: 'Stock is reserved the moment you add a product to your cart. The marketplace shows remaining stock on every product card — red means 5 or fewer, orange means 6–20, gray means plenty. Out-of-stock products cannot be added to cart.',
   },
   {
-    keywords: ['address', 'saved address', 'delivery address', 'shipping address'],
-    answer: 'Go to Saved Addresses in the navigation menu to add, edit, or delete addresses. You can save multiple addresses and choose one at checkout.',
+    keywords: ['low stock', 'stock alert', 'stock notification'],
+    answer: 'Sellers receive a low-stock notification automatically when a product\'s stock drops to 10 units or below.',
   },
+  {
+    keywords: ['product', 'add product', 'list product', 'new product', 'create product'],
+    answer: 'From the Seller Dashboard click + New Product. Fill in name, description, price, stock, category, and images. You can add variants (e.g. sizes with price modifiers) and add-ons (e.g. extras for an additional fee).',
+  },
+  {
+    keywords: ['variant', 'addon', 'add-on', 'option', 'size', 'color', 'extra'],
+    answer: 'Variants are product options like size or color where each choice has its own price. Add-ons are optional extras buyers can include for an additional fee (e.g. "Extra sauce +₱10"). Both are set up by the seller when creating a product.',
+  },
+  {
+    keywords: ['share', 'share product', 'share link', 'copy link', 'send product'],
+    answer: 'On any product detail page tap the Share icon (next to the heart). On mobile it opens your phone\'s native share sheet (WhatsApp, Messenger, copy link, etc.). On desktop it copies the product URL to your clipboard and shows a green checkmark.',
+  },
+  // ── Addresses ────────────────────────────────────────────────────────────────
+  {
+    keywords: ['address', 'saved address', 'delivery address', 'shipping address', 'save address'],
+    answer: 'Go to Saved Addresses in the navigation menu to add, edit, or delete addresses. You can also check "Save this address" during checkout to save a new one. At checkout, saved addresses appear as selectable cards for quick reuse.',
+  },
+  // ── Notifications ────────────────────────────────────────────────────────────
+  {
+    keywords: ['notification', 'push', 'alert', 'enable notification', 'bell'],
+    answer: 'Go to your Profile and scroll to Push Notifications. Click Enable and allow notifications in your browser. You\'ll get real-time alerts for order updates, payment confirmations, pickup readiness, messages, and more. Tap the bell icon in the nav to view all notifications.',
+  },
+  {
+    keywords: ['unread notification', 'mark read', 'notification list', 'view notification'],
+    answer: 'Tap the bell icon in the navigation bar to open the Notifications page. Unread notifications have a colored left border and a dot indicator. Tap "Mark all read" to clear them all, or tap any notification to go directly to the relevant page.',
+  },
+  {
+    keywords: ['toast', 'popup', 'dismiss', 'close notification', 'alert disappear'],
+    answer: 'Toast pop-up alerts auto-dismiss after 2.5 seconds. You can close them immediately by tapping the X button visible in the top-right corner of the toast.',
+  },
+  // ── Report Issue ─────────────────────────────────────────────────────────────
+  {
+    keywords: ['report', 'report issue', 'bug', 'problem', 'feedback', 'complain'],
+    answer: 'Open the account menu (tap your avatar) and select "Report an Issue", or find the button at the bottom of your Profile page. Fill in a subject, describe the issue, and optionally attach a screenshot. Your report is sent to the admin team. Check "My Reports" on the same page to track the status and see admin responses.',
+  },
+  {
+    keywords: ['report status', 'my report', 'report history', 'admin response', 'report resolved'],
+    answer: 'On the Report an Issue page, switch to the "My Reports" tab to see all your submitted reports. Each shows its status: Open, In Progress, Resolved, or Dismissed. Admin notes or responses appear directly on the report card.',
+  },
+  // ── Misc ─────────────────────────────────────────────────────────────────────
   {
     keywords: ['favorite', 'wishlist', 'save product', 'heart', 'liked'],
     answer: 'Tap the heart icon on any product page to save it to your Favorites. View all saved items under Favorites in the navigation menu.',
   },
   {
     keywords: ['transaction', 'payment history', 'history'],
-    answer: 'Your full payment history is in the Transactions page (available in the navigation menu). It shows order number, store, payment method, status, and amount for every transaction.',
+    answer: 'Your full payment history is in the Transactions page (navigation menu). It shows order number, store, payment method, status, and amount for every transaction.',
   },
   {
     keywords: ['review', 'rating', 'rate', 'feedback', 'star'],
     answer: 'After your order is marked Delivered you can leave a star rating and written comment on the product page or from the order detail page.',
   },
   {
-    keywords: ['notification', 'push', 'alert', 'enable notification'],
-    answer: 'Go to your Profile and scroll to Push Notifications. Click Enable and allow notifications in your browser. You will receive real-time alerts for order updates, payment confirmations, and messages.',
-  },
-  {
     keywords: ['chat', 'message', 'contact seller', 'talk to seller'],
-    answer: 'You can chat with the seller directly from your order detail page. Click Chat with Seller / Chat with Buyer to open a real-time chat window. You can send text and images.',
+    answer: 'You can chat with the seller directly from your order detail page. Click Chat with Seller / Chat with Buyer to open a real-time chat window supporting text and images.',
   },
   {
-    keywords: ['product', 'add product', 'list product', 'new product', 'create product'],
-    answer: 'From the Seller Dashboard click + New Product. Fill in the product name, description, price, stock, category, and images. You can also add variants (e.g. sizes with price modifiers) and add-ons (e.g. extras for an additional fee).',
-  },
-  {
-    keywords: ['variant', 'addon', 'add-on', 'option', 'size', 'color', 'extra'],
-    answer: 'Variants are product options like size or color where each choice can have a different price. Add-ons are optional extras buyers can include for an additional fee (e.g. "Extra sauce +₱10"). Both are set up by the seller when creating a product.',
-  },
-  {
-    keywords: ['dashboard', 'sales', 'revenue', 'report', 'analytics'],
-    answer: 'The Seller Dashboard shows your total revenue, order counts, a 30-day daily revenue bar chart, and top-selling products. It updates in real time and refreshes every 30 seconds as a fallback.',
-  },
-  {
-    keywords: ['low stock', 'stock alert', 'stock notification'],
-    answer: 'You receive a low-stock notification automatically when a product\'s stock drops to 10 units or below.',
+    keywords: ['dashboard', 'sales', 'revenue', 'analytics'],
+    answer: 'The Seller Dashboard shows your total revenue, order counts, a 30-day daily revenue bar chart, and top-selling products. It updates in real time via live notifications.',
   },
   {
     keywords: ['store', 'store page', 'store profile', 'store settings', 'store name'],
-    answer: 'Each seller has a public store page showing all their available products. Sellers can update their store name and profile in Store Settings from the navigation menu.',
+    answer: 'Each seller has a public store page showing all available products. Sellers can update their store name and delivery settings in Store Settings from the navigation menu.',
   },
   {
     keywords: ['search', 'filter', 'browse', 'find product', 'marketplace'],
-    answer: 'Go to the Marketplace page to browse all products. You can search by name, filter by category, and sort by price or newest. On mobile the product grid becomes a horizontal swipe carousel.',
+    answer: 'Go to the Marketplace page to browse all products. Search by name, filter by category, and sort by price or newest. Every product card shows the remaining stock count so you know availability at a glance.',
   },
   {
     keywords: ['mobile', 'phone', 'responsive', 'app'],
-    answer: 'Rosewood Marketplace is fully mobile-responsive. Product galleries, store listings, and the marketplace all support horizontal swipe carousels on mobile browsers — no app download needed.',
+    answer: 'Rosewood Marketplace is fully mobile-responsive — no app download needed. Product galleries, store listings, and the marketplace support swipe carousels on mobile browsers.',
   },
   {
     keywords: ['profile', 'update profile', 'edit profile', 'my profile'],
-    answer: 'Go to Profile from the user menu to update your name, phone number, address, and profile photo. Sellers can also update their store name here.',
+    answer: 'Go to Profile from the user menu to update your name, phone, address, and photo. Sellers can also update their store name here. The Report an Issue button is also at the bottom of the profile page.',
   },
   {
-    keywords: ['password', 'forgot password', 'reset password', 'change password'],
-    answer: 'Password reset is not yet available as a self-service feature. Please contact the marketplace admin for assistance.',
+    keywords: ['admin', 'approve', 'pending seller', 'manage user', 'store management', 'issue reports'],
+    answer: 'Admins can approve/reject seller applications, manage user accounts, view all transactions, toggle the AI assistant on/off, manage store products, force-cancel orders, and review user-submitted issue reports — all from the admin dashboard.',
   },
   {
-    keywords: ['role', 'change role', 'buyer to seller', 'seller to buyer'],
-    answer: 'Role changes are not supported in the app. If you need a different role, register a new account with a different email address and select the desired role.',
-  },
-  {
-    keywords: ['admin', 'approve', 'pending seller', 'manage user', 'dispute'],
-    answer: 'Admins can approve or reject seller applications, manage all user accounts, monitor all transactions, view online users in real time, and handle disputes — all from the admin dashboard.',
+    keywords: ['ai assistant', 'chatbot', 'disable chat', 'enable chat', 'market assistant'],
+    answer: 'The AI assistant chatbot is controlled by the admin. If it\'s visible, it means the admin has it enabled. Admins can toggle it on or off from the System Settings page in the admin dashboard.',
   },
   {
     keywords: ['faq', 'help', 'guide', 'how does', 'how do'],
-    answer: 'You can find detailed answers to common questions on our FAQ page. Click FAQ in the navigation menu or footer to browse topics like buying, selling, payments, and account management.',
+    answer: 'You can find detailed answers to common questions on our FAQ page — tap FAQ in the navigation menu or footer. Topics include buying, selling, payments, pickup, notifications, and reporting issues.',
   },
   {
     keywords: ['what is', 'about', 'rosewood', 'rp market', 'marketplace'],
@@ -204,8 +249,8 @@ const WELCOME = {
 const SUGGESTIONS = [
   'How do I place an order?',
   'How does GCash payment work?',
-  'How do I register as a seller?',
-  'How do I track my order?',
+  'How do I report an issue?',
+  'How does pickup work?',
 ];
 
 function Message({ msg }) {
