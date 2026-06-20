@@ -39,6 +39,8 @@ import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
 import AdminOnlinePage from './pages/admin/AdminOnlinePage';
 import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 import AdminPendingSellersPage from './pages/admin/AdminPendingSellersPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import AdminStoreManagePage from './pages/admin/AdminStoreManagePage';
 import PendingApprovalPage from './pages/PendingApprovalPage';
 import FAQPage from './pages/FAQPage';
 
@@ -119,6 +121,8 @@ export default function App() {
         <Route path="/admin/online" element={<PrivateRoute roles={['ADMIN']}><AdminOnlinePage /></PrivateRoute>} />
         <Route path="/admin/transactions" element={<PrivateRoute roles={['ADMIN']}><AdminTransactionsPage /></PrivateRoute>} />
         <Route path="/admin/pending-sellers" element={<PrivateRoute roles={['ADMIN']}><AdminPendingSellersPage /></PrivateRoute>} />
+        <Route path="/admin/settings" element={<PrivateRoute roles={['ADMIN']}><AdminSettingsPage /></PrivateRoute>} />
+        <Route path="/admin/stores" element={<PrivateRoute roles={['ADMIN']}><AdminStoreManagePage /></PrivateRoute>} />
         {/* Shared */}
         <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />

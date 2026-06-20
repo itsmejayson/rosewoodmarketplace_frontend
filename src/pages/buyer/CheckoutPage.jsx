@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Banknote, Smartphone, ShoppingBag, CheckCircle, Truck, Store, X, AlertCircle } from 'lucide-react';
+import { Loader2, Banknote, Smartphone, ShoppingBag, CheckCircle, Truck, Store, X, AlertCircle, MapPin, Check } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -74,6 +74,8 @@ export default function CheckoutPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingData, setPendingData] = useState(null);
   const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [saveAddress, setSaveAddress] = useState(false);
   // Map of sellerId -> { defaultDeliveryFee, freeDeliveryThreshold, storeName }
   const [sellerInfoMap, setSellerInfoMap] = useState({});
 
@@ -82,7 +84,16 @@ export default function CheckoutPage() {
   useEffect(() => { fetchCart(); }, []);
   useEffect(() => {
     addressAPI.list()
-      .then(({ data }) => setSavedAddresses(data.data || []))
+      .then(({ data }) => {
+        const list = data.data || [];
+        setSavedAddresses(list);
+        // Auto-apply default address
+        const def = list.find((a) => a.isDefault) || list[0];
+        if (def) {
+          setSelectedAddressId(def.id);
+          applyAddress(def);
+        }
+      })
       .catch(() => {});
   }, []);
   useEffect(() => {
@@ -107,16 +118,18 @@ export default function CheckoutPage() {
     resolver: zodResolver(isPickup ? pickupSchema : deliverySchema),
   });
 
-  const applySavedAddress = (id) => {
-    const a = savedAddresses.find((x) => String(x.id) === String(id));
-    if (!a) return;
+  const applyAddress = (a) => {
     setValue('shippingName', a.fullName || '');
     setValue('shippingPhone', a.phone || '');
+    setValue('shippingState', a.state || '');
     setValue('shippingAddress', a.address || '');
     setValue('shippingCity', a.city || '');
-    setValue('shippingState', a.state || '');
-    setValue('shippingZip', a.zip || '');
-    setValue('shippingCountry', a.country || '');
+  };
+
+  const selectAddress = (addr) => {
+    setSelectedAddressId(addr.id);
+    applyAddress(addr);
+    setSaveAddress(false); // no need to save an already-saved address
   };
 
   // Filter to exactly the items the buyer selected in the cart
@@ -156,6 +169,19 @@ export default function CheckoutPage() {
     setShowConfirm(false);
     setIsSubmitting(true);
     try {
+      // Save address if buyer opted in (delivery only, not using an existing saved address)
+      if (!isPickup && saveAddress && !selectedAddressId && pendingData) {
+        try {
+          await addressAPI.create({
+            fullName: pendingData.shippingName || '',
+            phone: pendingData.shippingPhone || '',
+            state: pendingData.shippingState || '',
+            address: pendingData.shippingAddress || '',
+            city: pendingData.shippingCity || '',
+          });
+        } catch {} // non-blocking — don't fail the order if address save fails
+      }
+
       const results = [];
       for (const group of storeGroups) {
         const { data: res } = await orderAPI.checkout({
@@ -397,41 +423,114 @@ export default function CheckoutPage() {
             {!isPickup && (
               <Card>
                 <CardHeader><CardTitle className="text-base">Delivery Address</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="shippingName">Full Name *</Label>
-                    <Input id="shippingName" placeholder="Juan dela Cruz" {...register('shippingName')} />
-                    {errors.shippingName && <p className="text-xs text-destructive">{errors.shippingName.message}</p>}
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="shippingState">Phase *</Label>
-                    <Input id="shippingState" placeholder="e.g. Phase 1" {...register('shippingState')} />
-                    {errors.shippingState && <p className="text-xs text-destructive">{errors.shippingState.message}</p>}
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+                <CardContent className="space-y-4">
+
+                  {/* Saved address picker */}
+                  {savedAddresses.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Saved Addresses</p>
+                      <div className="space-y-2">
+                        {savedAddresses.map((addr) => {
+                          const isSelected = selectedAddressId === addr.id;
+                          const parts = [addr.state && `Phase ${addr.state}`, addr.address && `Lot ${addr.address}`, addr.city && `Block ${addr.city}`].filter(Boolean).join(', ');
+                          return (
+                            <button
+                              key={addr.id}
+                              type="button"
+                              onClick={() => selectAddress(addr)}
+                              className={`w-full flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-colors ${isSelected ? 'border-rosewood-500 bg-rosewood-50' : 'border-gray-200 hover:border-rosewood-300'}`}
+                            >
+                              <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${isSelected ? 'border-rosewood-500 bg-rosewood-500' : 'border-gray-300'}`}>
+                                {isSelected && <div className="h-2 w-2 rounded-full bg-white" />}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-gray-900">{addr.fullName}</p>
+                                  {addr.isDefault && <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full">Default</span>}
+                                  {addr.label && <span className="text-[10px] text-rosewood-700 bg-rosewood-50 px-1.5 py-0.5 rounded-full">{addr.label}</span>}
+                                </div>
+                                <p className="text-xs text-gray-500">{addr.phone}</p>
+                                {parts && <p className="text-xs text-gray-600 mt-0.5">{parts}</p>}
+                              </div>
+                              {isSelected && <Check className="h-4 w-4 text-rosewood-600 flex-shrink-0 mt-0.5" />}
+                            </button>
+                          );
+                        })}
+                        {/* Option to enter a new address instead */}
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedAddressId(null); ['shippingName','shippingPhone','shippingState','shippingAddress','shippingCity'].forEach(f => setValue(f, '')); }}
+                          className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors ${!selectedAddressId ? 'border-rosewood-500 bg-rosewood-50' : 'border-gray-200 hover:border-rosewood-300'}`}
+                        >
+                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${!selectedAddressId ? 'border-rosewood-500 bg-rosewood-500' : 'border-gray-300'}`}>
+                            {!selectedAddressId && <div className="h-2 w-2 rounded-full bg-white" />}
+                          </div>
+                          <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-700">Enter a new address</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manual address form — always visible, but pre-filled when saved address selected */}
+                  <div className={`space-y-3 ${savedAddresses.length > 0 ? 'pt-2 border-t border-gray-100' : ''}`}>
+                    {savedAddresses.length > 0 && (
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {selectedAddressId ? 'Selected Address Details' : 'New Address'}
+                      </p>
+                    )}
                     <div className="space-y-1">
-                      <Label htmlFor="shippingAddress">Lot *</Label>
-                      <Input id="shippingAddress" placeholder="e.g. Lot 12" {...register('shippingAddress')} />
-                      {errors.shippingAddress && <p className="text-xs text-destructive">{errors.shippingAddress.message}</p>}
+                      <Label htmlFor="shippingName">Full Name *</Label>
+                      <Input id="shippingName" placeholder="Juan dela Cruz" {...register('shippingName')} readOnly={!!selectedAddressId} className={selectedAddressId ? 'bg-gray-50' : ''} />
+                      {errors.shippingName && <p className="text-xs text-destructive">{errors.shippingName.message}</p>}
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="shippingCity">Block *</Label>
-                      <Input id="shippingCity" placeholder="e.g. Block 3" {...register('shippingCity')} />
-                      {errors.shippingCity && <p className="text-xs text-destructive">{errors.shippingCity.message}</p>}
+                      <Label htmlFor="shippingState">Phase *</Label>
+                      <Input id="shippingState" placeholder="e.g. Phase 1" {...register('shippingState')} readOnly={!!selectedAddressId} className={selectedAddressId ? 'bg-gray-50' : ''} />
+                      {errors.shippingState && <p className="text-xs text-destructive">{errors.shippingState.message}</p>}
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="shippingAddress">Lot *</Label>
+                        <Input id="shippingAddress" placeholder="e.g. Lot 12" {...register('shippingAddress')} readOnly={!!selectedAddressId} className={selectedAddressId ? 'bg-gray-50' : ''} />
+                        {errors.shippingAddress && <p className="text-xs text-destructive">{errors.shippingAddress.message}</p>}
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="shippingCity">Block *</Label>
+                        <Input id="shippingCity" placeholder="e.g. Block 3" {...register('shippingCity')} readOnly={!!selectedAddressId} className={selectedAddressId ? 'bg-gray-50' : ''} />
+                        {errors.shippingCity && <p className="text-xs text-destructive">{errors.shippingCity.message}</p>}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="shippingPhone">Contact Number *</Label>
+                      <Input
+                        id="shippingPhone"
+                        type="tel"
+                        inputMode="tel"
+                        placeholder="09XX-XXX-XXXX"
+                        {...register('shippingPhone')}
+                        readOnly={!!selectedAddressId}
+                        className={selectedAddressId ? 'bg-gray-50' : ''}
+                        onInput={(e) => { if (!selectedAddressId) e.target.value = e.target.value.replace(/[^0-9+\-()\s]/g, ''); }}
+                      />
+                      {errors.shippingPhone && <p className="text-xs text-destructive">{errors.shippingPhone.message}</p>}
+                    </div>
+
+                    {/* Save address checkbox — only when entering a new address */}
+                    {!selectedAddressId && (
+                      <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:border-rosewood-300 transition-colors">
+                        <div className={`h-5 w-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${saveAddress ? 'bg-rosewood-600 border-rosewood-600' : 'border-gray-300'}`}>
+                          {saveAddress && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                        </div>
+                        <input type="checkbox" className="sr-only" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} />
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">Save this address</p>
+                          <p className="text-xs text-gray-400">Reuse on future orders</p>
+                        </div>
+                      </label>
+                    )}
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="shippingPhone">Contact Number *</Label>
-                    <Input
-                      id="shippingPhone"
-                      type="tel"
-                      inputMode="tel"
-                      placeholder="09XX-XXX-XXXX"
-                      {...register('shippingPhone')}
-                      onInput={(e) => { e.target.value = e.target.value.replace(/[^0-9+\-()\s]/g, ''); }}
-                    />
-                    {errors.shippingPhone && <p className="text-xs text-destructive">{errors.shippingPhone.message}</p>}
-                  </div>
+
                   <div className="space-y-1">
                     <Label htmlFor="notes">Order Notes (optional)</Label>
                     <Input id="notes" placeholder="Special instructions..." {...register('notes')} />

@@ -77,6 +77,7 @@ export const orderAPI = {
   approvePayment: (orderId, data) => api.post(`/orders/${orderId}/approve-payment`, data),
   confirmCash: (orderId) => api.post(`/orders/${orderId}/confirm-cash`),
   updateStatus: (id, status) => api.patch(`/orders/${id}/status`, { status }),
+  notifyReadyForPickup: (id) => api.post(`/orders/${id}/ready-for-pickup`),
   cancelOrder: (id, reason) => api.post(`/orders/${id}/cancel`, { reason }),
   confirmOrder: (id, data) => api.post(`/orders/${id}/confirm`, data),
   setDeliveryFee: (id, fee) => api.post(`/orders/${id}/delivery-fee`, { fee }),
@@ -155,4 +156,16 @@ export const refundAPI = {
 // ── Store settings ────────────────────────────────────────────────────────────
 export const storeSettingsAPI = {
   update: (data) => api.put('/stores/settings', data),
+};
+
+// ── Admin ──────────────────────────────────────────────────────────────────────
+export const adminAPI = {
+  getSettings: () => api.get('/settings'),
+  updateSettings: (data) => api.put('/admin/settings', data),
+  listSellers: () => api.get('/admin/sellers'),
+  listProducts: (params) => api.get('/admin/products', { params }),
+  deleteProduct: (id) => api.delete(`/admin/products/${id}`),
+  cleanupStore: (sellerId) => api.delete(`/admin/sellers/${sellerId}/cleanup`),
+  forceCancelOrder: (id, reason) => api.post(`/admin/orders/${id}/force-cancel`, { reason }),
+  clearUserCart: (userId) => api.delete(`/admin/users/${userId}/cart`),
 };

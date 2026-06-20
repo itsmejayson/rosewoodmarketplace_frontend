@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User, RotateCcw } from 'lucide-react';
+import { adminAPI } from '../api';
 
 // ── Knowledge base ────────────────────────────────────────────────────────────
 // Each entry has keyword triggers and an answer. Longer / more specific keyword
@@ -219,8 +220,15 @@ export default function AIChatWidget() {
   const [messages, setMessages] = useState([WELCOME]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
+  const [enabled, setEnabled] = useState(true);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    adminAPI.getSettings()
+      .then(({ data }) => { if (data?.data?.aiAssistantEnabled === false) setEnabled(false); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 120);
@@ -254,6 +262,8 @@ export default function AIChatWidget() {
   };
 
   const showSuggestions = messages.length === 1 && !thinking;
+
+  if (!enabled) return null;
 
   return (
     <>

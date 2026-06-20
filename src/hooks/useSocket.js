@@ -72,6 +72,19 @@ export const useSocket = () => {
       toast({ title: '❌ Payment Rejected', description: reason || 'Please re-upload your receipt.', variant: 'destructive' });
     });
 
+    // Buyer: pickup order is ready
+    socket.on('readyForPickup', ({ orderNumber }) => {
+      addNotification({
+        id: Date.now().toString(),
+        type: 'ORDER_STATUS_UPDATE',
+        title: 'Ready for Pickup!',
+        message: `Order #${orderNumber} is ready for pickup.`,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+      toast({ title: '🛍️ Ready for Pickup!', description: `Order #${orderNumber} — please come to the store.` });
+    });
+
     return () => {
       socket?.disconnect();
       socket = null;

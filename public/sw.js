@@ -1,5 +1,14 @@
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() || {};
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: 'Rosewood Marketplace', body: event.data ? event.data.text() : '' };
+  }
+
   const title = data.title || 'Rosewood Marketplace';
   const options = {
     body: data.body || '',
@@ -7,23 +16,34 @@ self.addEventListener('push', (event) => {
     badge: '/logo.png',
     data: data.data || {},
     vibrate: [200, 100, 200],
+    requireInteraction: false,
   };
+
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.actionUrl || '/';
+  const fullUrl = self.location.origin + (url.startsWith('/') ? url : '/' + url);
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Try to find an existing window to reuse
       for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
+        if ('focus' in client) {
           client.focus();
-          client.navigate(url);
-          return;
+          // navigate() is not available in all browsers — use postMessage as fallback
+          if ('navigate' in client) {
+            return client.navigate(fullUrl);
+          } else {
+            client.postMessage({ type: 'NAVIGATE', url: fullUrl });
+            return;
+          }
         }
       }
-      if (clients.openWindow) return clients.openWindow(url);
+      // No existing window — open a new one
+      if (self.clients.openWindow) return self.clients.openWindow(fullUrl);
     })
   );
 });

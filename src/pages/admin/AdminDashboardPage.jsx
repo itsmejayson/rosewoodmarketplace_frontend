@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSocket } from '../../hooks/useSocket';
-import { Users, Store, ShoppingBag, Package, TrendingUp, Loader2, Wifi, CreditCard, Clock } from 'lucide-react';
+import { Users, Store, ShoppingBag, Package, TrendingUp, Loader2, Wifi, CreditCard, Clock, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { userAPI } from '../../api';
 import { formatCurrency, formatDate, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../lib/utils';
@@ -91,7 +91,7 @@ export default function AdminDashboardPage() {
       {/* Quick links — always 2 cols on sm, 3 on md, 5 on xl */}
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Quick Access</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
           <QuickCard
             to="/admin/users?role=SELLER"
             icon={Store}
@@ -132,6 +132,22 @@ export default function AdminDashboardPage() {
             title="Pending Sellers"
             subtitle={pendingCount > 0 ? `${pendingCount} awaiting` : 'No pending'}
             badge={pendingCount}
+          />
+          <QuickCard
+            to="/admin/stores"
+            icon={Store}
+            iconColor="text-purple-600"
+            iconBg="bg-purple-50"
+            title="Store Management"
+            subtitle="Products & cleanup"
+          />
+          <QuickCard
+            to="/admin/settings"
+            icon={Settings}
+            iconColor="text-gray-600"
+            iconBg="bg-gray-100"
+            title="System Settings"
+            subtitle="AI assistant & more"
           />
         </div>
       </div>

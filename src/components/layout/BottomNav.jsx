@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingCart, ShoppingBag, LayoutDashboard, Package, User, Store, Users } from 'lucide-react';
+import { Home, ShoppingCart, ShoppingBag, LayoutDashboard, Package, User, Store, Users, Settings } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
 import useSellerOrderStore from '../../store/sellerOrderStore';
@@ -123,9 +123,13 @@ export default function BottomNav() {
             <Users className="h-5 w-5" strokeWidth={isActive('/admin/users') ? 2.5 : 1.8} />
             Users
           </Link>
-          <Link to="/stores" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/stores') ? 'text-rosewood-600' : 'text-gray-400'}`}>
-            <Store className="h-5 w-5" strokeWidth={isActive('/stores') ? 2.5 : 1.8} />
+          <Link to="/admin/stores" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/admin/stores') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <Store className="h-5 w-5" strokeWidth={isActive('/admin/stores') ? 2.5 : 1.8} />
             Stores
+          </Link>
+          <Link to="/admin/settings" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/admin/settings') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <Settings className="h-5 w-5" strokeWidth={isActive('/admin/settings') ? 2.5 : 1.8} />
+            Settings
           </Link>
           <Link to="/profile" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/profile') ? 'text-rosewood-600' : 'text-gray-400'}`}>
             <User className="h-5 w-5" strokeWidth={isActive('/profile') ? 2.5 : 1.8} />

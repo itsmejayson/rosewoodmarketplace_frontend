@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Truck, Store, X, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Truck, Store, X, RotateCcw, Bell } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { orderAPI, refundAPI } from '../../api';
@@ -8,7 +8,10 @@ import { formatCurrency, formatDate, ORDER_STATUS_COLORS } from '../../lib/utils
 import { toast } from '../../components/ui/toast';
 import TransactionChat from '../../components/chat/TransactionChat';
 
-const NEXT_STATUS = { PAID: 'PROCESSING', PROCESSING: 'SHIPPED', SHIPPED: 'DELIVERED' };
+// Delivery flow: PAID → PROCESSING → SHIPPED → DELIVERED
+// Pickup flow:   PAID → PROCESSING (ready) → DELIVERED (picked up)
+const NEXT_STATUS_DELIVERY = { PAID: 'PROCESSING', PROCESSING: 'SHIPPED', SHIPPED: 'DELIVERED' };
+const NEXT_STATUS_PICKUP   = { PROCESSING: 'DELIVERED' };
 
 export default function SellerOrderDetailPage() {
   const { id } = useParams();
@@ -62,9 +65,13 @@ export default function SellerOrderDetailPage() {
   const tx = order.transaction;
   const computedSubtotal = (order.orderItems || []).reduce((sum, item) => sum + parseFloat(item.totalPrice || 0), 0);
   const computedTotal = computedSubtotal + parseFloat(order.deliveryFee || 0);
+  const isPickup = order.fulfillmentType === 'PICKUP';
   const canApproveGcash = tx?.paymentMethod === 'GCASH' && tx?.paymentStatus === 'PENDING_VERIFICATION';
   const canConfirmCash = tx?.paymentMethod === 'CASH' && tx?.paymentStatus === 'PENDING' && order.status === 'AWAITING_PAYMENT';
-  const nextStatus = NEXT_STATUS[order.status];
+  const nextStatusMap = isPickup ? NEXT_STATUS_PICKUP : NEXT_STATUS_DELIVERY;
+  const nextStatus = nextStatusMap[order.status];
+  // Pickup: seller can notify buyer "ready" when order is PAID (before marking PROCESSING)
+  const canNotifyPickup = isPickup && order.status === 'PAID';
   const canCancelOrder = ['PENDING', 'AWAITING_PAYMENT'].includes(order.status);
 
   return (
@@ -114,12 +121,32 @@ export default function SellerOrderDetailPage() {
           </CardContent>
         </Card>
       )}
-      {order.status === 'AWAITING_PAYMENT' && order.fulfillmentType === 'PICKUP' && (
+      {order.status === 'AWAITING_PAYMENT' && isPickup && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Loader2 className="h-5 w-5 text-blue-600 animate-spin flex-shrink-0" />
+            <p className="text-sm text-blue-800">
+              Pick-up order — waiting for buyer to pay <strong>{formatCurrency(computedTotal)}</strong>.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      {order.status === 'PAID' && isPickup && (
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-4 flex items-center gap-3">
             <Store className="h-5 w-5 text-green-600 flex-shrink-0" />
             <p className="text-sm text-green-800">
-              This is a <strong>pick-up order</strong>. Waiting for buyer to complete payment of <strong>{formatCurrency(computedTotal)}</strong>.
+              Payment received! Click <strong>Notify Ready for Pickup</strong> when the order is prepared for the buyer.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      {order.status === 'PROCESSING' && isPickup && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Bell className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <p className="text-sm text-green-800">
+              Buyer has been notified their order is ready. Click <strong>Mark as Picked Up</strong> once they collect it.
             </p>
           </CardContent>
         </Card>
@@ -164,10 +191,25 @@ export default function SellerOrderDetailPage() {
           </Button>
         )}
 
+        {canNotifyPickup && (
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            onClick={() => act(() => orderAPI.notifyReadyForPickup(order.id), 'Buyer notified — order is ready for pickup!')}
+            disabled={isActing}
+          >
+            {isActing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bell className="h-4 w-4 mr-2" />}
+            Notify Ready for Pickup
+          </Button>
+        )}
+
         {nextStatus && (
-          <Button className="bg-rosewood-600 hover:bg-rosewood-700" onClick={() => act(() => orderAPI.updateStatus(order.id, nextStatus), `Order moved to ${nextStatus}`)} disabled={isActing}>
+          <Button
+            className="bg-rosewood-600 hover:bg-rosewood-700"
+            onClick={() => act(() => orderAPI.updateStatus(order.id, nextStatus), `Order moved to ${nextStatus}`)}
+            disabled={isActing}
+          >
             {isActing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Mark as {nextStatus}
+            {isPickup && nextStatus === 'DELIVERED' ? 'Mark as Picked Up' : `Mark as ${nextStatus}`}
           </Button>
         )}
 
