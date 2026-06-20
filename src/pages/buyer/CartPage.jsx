@@ -62,8 +62,8 @@ export default function CartPage() {
           {cart.cartItems.map((item) => (
             <Card key={item.id}>
               <CardContent className="p-4">
-                <div className="flex gap-4">
-                  <div className="w-20 h-20 rounded-md overflow-hidden border flex-shrink-0 bg-muted">
+                <div className="flex gap-3">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-md overflow-hidden border flex-shrink-0 bg-muted">
                     <img
                       src={item.product.images?.[0]?.url || '/placeholder-product.jpg'}
                       alt={item.product.name}
@@ -133,7 +133,7 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div>
-          <Card className="sticky top-20">
+          <Card className="lg:sticky lg:top-20">
             <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">

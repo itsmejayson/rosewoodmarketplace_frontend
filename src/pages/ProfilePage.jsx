@@ -94,7 +94,7 @@ export default function ProfilePage() {
 
       {/* Avatar */}
       <Card>
-        <CardContent className="pt-6 flex items-center gap-6">
+        <CardContent className="pt-6 flex flex-wrap items-center gap-6">
           <div className="relative">
             {user?.profileImage ? (
               <img src={user.profileImage} alt={user.fullName} className="w-20 h-20 rounded-full object-cover" />
@@ -185,8 +185,8 @@ export default function ProfilePage() {
           {permission === 'denied' ? (
             <p className="text-sm text-muted-foreground">Push notifications are blocked in your browser settings. Enable them in your browser site settings to receive notifications.</p>
           ) : (
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex-1">
                 <p className="text-sm font-medium">{isSubscribed ? 'Notifications enabled' : 'Notifications disabled'}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Receive order updates, payment confirmations, and messages.</p>
               </div>

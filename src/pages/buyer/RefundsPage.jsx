@@ -86,7 +86,7 @@ export default function RefundsPage() {
                       )}
                     </div>
                     <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusColor}`}
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold flex-shrink-0 whitespace-nowrap ${statusColor}`}
                     >
                       {refund.status}
                     </span>

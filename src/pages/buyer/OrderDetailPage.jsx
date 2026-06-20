@@ -146,10 +146,10 @@ export default function OrderDetailPage() {
 
       <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Order #{order.orderNumber}</h1>
+          <h1 className="text-xl md:text-2xl font-bold break-all">Order #{order.orderNumber}</h1>
           <p className="text-muted-foreground text-sm">{formatDate(order.createdAt)}</p>
         </div>
-        <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${ORDER_STATUS_COLORS[order.status]}`}>
             {order.status.replace('_', ' ')}
           </span>

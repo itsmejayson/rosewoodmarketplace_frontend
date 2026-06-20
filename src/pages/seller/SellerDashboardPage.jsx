@@ -133,10 +133,10 @@ export default function SellerDashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Seller Dashboard</h1>
-          <p className="text-muted-foreground flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold">Seller Dashboard</h1>
+          <p className="text-muted-foreground text-sm flex items-center gap-2 flex-wrap">
             Monitor your sales and manage your business
             {lastUpdated && (
               <span className="text-xs text-muted-foreground/70">
@@ -151,13 +151,13 @@ export default function SellerDashboardPage() {
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
           <Link to="/seller/products/new">
-            <Button className="bg-rosewood-600 hover:bg-rosewood-700">+ New Product</Button>
+            <Button className="bg-rosewood-600 hover:bg-rosewood-700 text-sm">+ New Product</Button>
           </Link>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
         {statCards.map(({ title, value, icon: Icon, color, bg }) => (
           <Card key={title}>
             <CardContent className="p-4">
@@ -203,7 +203,8 @@ export default function SellerDashboardPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <svg viewBox="0 0 600 200" className="w-full h-auto" preserveAspectRatio="none" role="img" aria-label="Daily revenue for the last 30 days">
+          <div className="overflow-x-auto">
+          <svg viewBox="0 0 600 200" className="w-full min-w-[400px] h-auto" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Daily revenue for the last 30 days">
             <g className="text-rosewood-500" fill="currentColor">
               {dayBuckets.map((b, i) => {
                 const h = maxRevenue > 0 ? (b.revenue / maxRevenue) * usableH : 0;
@@ -218,7 +219,8 @@ export default function SellerDashboardPage() {
             </g>
             <line x1="0" y1={BASELINE} x2={CHART_W} y2={BASELINE} stroke="#E5E7EB" strokeWidth="1" />
           </svg>
-          <div className="mt-3 flex items-center justify-between">
+          </div>
+          <div className="mt-3 flex items-center justify-between flex-wrap gap-1">
             <p className="text-sm font-medium">
               Total: <span className="text-rosewood-600 font-bold">{formatCurrency(totalDaily)}</span>
             </p>

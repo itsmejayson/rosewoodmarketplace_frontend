@@ -212,7 +212,7 @@ export default function SellerOrderDetailPage() {
         )}
 
         {showRejectForm && (
-          <div className="flex gap-2 w-full">
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
             <input
               className="flex-1 h-9 rounded-md border border-input px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder="Reason for rejection…"
@@ -244,7 +244,7 @@ export default function SellerOrderDetailPage() {
         )}
 
         {tx && (
-          <Button variant="outline" onClick={() => setShowChat(!showChat)} className="ml-auto">
+          <Button variant="outline" onClick={() => setShowChat(!showChat)} className="w-full sm:w-auto sm:ml-auto">
             <MessageSquare className="h-4 w-4 mr-2" /> {showChat ? 'Hide Chat' : 'Chat with Buyer'}
           </Button>
         )}
@@ -255,7 +255,7 @@ export default function SellerOrderDetailPage() {
           </Button>
         )}
         {canCancelOrder && showCancelConfirm && (
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex flex-wrap items-center gap-2 w-full">
             <p className="text-sm text-red-600 font-medium">Cancel this order?</p>
             <Button variant="destructive" size="sm" onClick={async () => {
               setIsActing(true);
@@ -450,7 +450,7 @@ export default function SellerOrderDetailPage() {
             {tx.referenceNumber && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Reference</span>
-                <span className="font-mono font-bold">{tx.referenceNumber}</span>
+                <span className="font-mono font-bold break-all text-right max-w-[60%]">{tx.referenceNumber}</span>
               </div>
             )}
             {tx.approvedAt && (
@@ -501,8 +501,7 @@ export default function SellerOrderDetailPage() {
       {showChat && tx && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50" onClick={() => setShowChat(false)}>
           <div
-            className="bg-background rounded-xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden"
-            style={{ maxHeight: '80vh' }}
+            className="bg-background rounded-xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden max-h-[80dvh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b">

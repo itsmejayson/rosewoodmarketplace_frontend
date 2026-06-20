@@ -128,7 +128,7 @@ export default function SellerRefundsPage() {
                 <CardContent className="p-4 space-y-3">
                   {/* Header */}
                   <div className="flex items-start justify-between gap-2">
-                    <div>
+                    <div className="min-w-0">
                       <Link
                         to={`/seller/orders/${order?.id}`}
                         className="font-semibold text-rosewood-600 hover:underline"
@@ -136,12 +136,12 @@ export default function SellerRefundsPage() {
                         Order #{order?.orderNumber}
                       </Link>
                       {buyer && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
                           {buyer.fullName} · {buyer.email}
                         </p>
                       )}
                     </div>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${STATUS_STYLES[refund.status]}`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap flex-shrink-0 ${STATUS_STYLES[refund.status]}`}>
                       {refund.status}
                     </span>
                   </div>

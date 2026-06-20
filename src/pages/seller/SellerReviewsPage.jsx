@@ -130,9 +130,9 @@ export default function SellerReviewsPage() {
                   )}
 
                   {/* Buyer + date */}
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground">
                     <span>By {buyer?.fullName ?? 'Anonymous'}</span>
-                    <span>{formatDate(review.createdAt)}</span>
+                    <span className="flex-shrink-0">{formatDate(review.createdAt)}</span>
                   </div>
                 </CardContent>
               </Card>

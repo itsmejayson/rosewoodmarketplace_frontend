@@ -1,5 +1,5 @@
 ﻿import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, Bell, User, LogOut, Store, Menu, X, LayoutDashboard, Package, ShoppingBag, Home, Users, Heart, MapPin, RotateCcw, Settings, AlertTriangle, Star } from 'lucide-react';
+import { ShoppingCart, Bell, User, LogOut, Store, Menu, X, LayoutDashboard, Package, ShoppingBag, Home, Users, Heart, MapPin, RotateCcw, Settings, AlertTriangle, Star, CreditCard } from 'lucide-react';
 
 function RpLogo({ className = '' }) {
   return (
@@ -83,6 +83,7 @@ export default function Navbar() {
         { to: '/seller/orders', label: 'Orders', icon: ShoppingBag, badge: pendingCount },
         { to: '/seller/refunds', label: 'Refunds', icon: RotateCcw, badge: pendingRefundCount },
         { to: '/seller/reviews', label: 'Reviews', icon: Star },
+        { to: '/seller/transactions', label: 'Transactions', icon: CreditCard },
         { to: '/seller/settings', label: 'Store Settings', icon: Settings },
       ]
     : user?.role === 'BUYER'
@@ -93,6 +94,7 @@ export default function Navbar() {
         { to: '/favorites', label: 'Favorites', icon: Heart },
         { to: '/addresses', label: 'Saved Addresses', icon: MapPin },
         { to: '/refunds', label: 'Refunds', icon: RotateCcw },
+        { to: '/transactions', label: 'Transactions', icon: CreditCard },
       ]
     : user?.role === 'ADMIN'
     ? [
