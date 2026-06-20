@@ -215,12 +215,12 @@ export default function ProductDetailPage() {
         />
       )}
 
-      <div className="container mx-auto px-4 py-8">
-        <Link to="/marketplace" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+      <div className="container mx-auto px-4 py-4 md:py-8">
+        <Link to="/marketplace" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" /> Back to Marketplace
         </Link>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {/* Images */}
           <div>
             {/* Mobile: swipe carousel */}
@@ -232,7 +232,7 @@ export default function ProductDetailPage() {
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {(product.images?.length ? product.images : [null]).map((img, idx) => (
-                  <div key={img?.id ?? idx} className="snap-center flex-shrink-0 w-full aspect-square">
+                  <div key={img?.id ?? idx} className="snap-center flex-shrink-0 w-full aspect-[4/3] md:aspect-square">
                     <img
                       src={img?.url || '/placeholder-product.jpg'}
                       alt={product.name}
@@ -290,7 +290,7 @@ export default function ProductDetailPage() {
               <span className="text-sm text-muted-foreground">{product.category?.name}</span>
             </div>
             <div className="flex items-start justify-between gap-3 mb-2">
-              <h1 className="text-3xl font-bold">{product.name}</h1>
+              <h1 className="text-xl md:text-3xl font-bold leading-snug">{product.name}</h1>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
@@ -429,13 +429,13 @@ export default function ProductDetailPage() {
 
         {/* You might also like */}
         {similar.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-xl font-bold mb-4">You might also like</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="mt-8 md:mt-12">
+            <h2 className="text-base md:text-xl font-bold mb-3">You might also like</h2>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {similar.map((p) => (
-                <Card key={p.id} className="overflow-hidden flex-shrink-0 w-48 flex flex-col">
+                <Card key={p.id} className="overflow-hidden flex-shrink-0 w-32 md:w-48 flex flex-col">
                   <Link to={`/products/${p.slug}`} className="block">
-                    <div className="h-36 bg-muted overflow-hidden">
+                    <div className="h-24 md:h-36 bg-muted overflow-hidden">
                       <img
                         src={p.images?.[0]?.url || '/placeholder-product.jpg'}
                         alt={p.name}
@@ -444,21 +444,21 @@ export default function ProductDetailPage() {
                       />
                     </div>
                   </Link>
-                  <CardContent className="p-3 flex flex-col flex-1">
-                    <Link to={`/products/${p.slug}`} className="font-medium text-sm line-clamp-2 hover:text-rosewood-600">
+                  <CardContent className="p-2 md:p-3 flex flex-col flex-1">
+                    <Link to={`/products/${p.slug}`} className="font-medium text-xs md:text-sm line-clamp-2 hover:text-rosewood-600">
                       {p.name}
                     </Link>
-                    <p className="font-bold text-rosewood-600 mt-1">{formatCurrency(p.price)}</p>
+                    <p className="font-bold text-rosewood-600 text-xs md:text-sm mt-1">{formatCurrency(p.price)}</p>
                     {user?.role === 'BUYER' && (
                       <Button
                         size="sm"
-                        className="w-full mt-2 bg-rosewood-600 hover:bg-rosewood-700 text-xs h-8"
+                        className="w-full mt-1.5 bg-rosewood-600 hover:bg-rosewood-700 text-[10px] md:text-xs h-7 md:h-8 px-1"
                         disabled={p.stockQty === 0 || addingSimilarId === p.id}
                         onClick={() => addSimilarToCart(p)}
                       >
                         {addingSimilarId === p.id
                           ? <Loader2 className="h-3 w-3 animate-spin" />
-                          : <><ShoppingCart className="h-3 w-3 mr-1" /> Add to Cart</>}
+                          : <><ShoppingCart className="h-3 w-3 mr-1" /> Add</>}
                       </Button>
                     )}
                   </CardContent>
