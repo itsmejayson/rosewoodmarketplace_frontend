@@ -39,8 +39,8 @@ import AdminUserDetailPage from './pages/admin/AdminUserDetailPage';
 import AdminOnlinePage from './pages/admin/AdminOnlinePage';
 import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 import AdminPendingSellersPage from './pages/admin/AdminPendingSellersPage';
-import AdminDisputesPage from './pages/admin/AdminDisputesPage';
 import PendingApprovalPage from './pages/PendingApprovalPage';
+import FAQPage from './pages/FAQPage';
 
 function PrivateRoute({ children, roles }) {
   const { user } = useAuthStore();
@@ -82,6 +82,7 @@ export default function App() {
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="/products/:slug" element={<ProductDetailPage />} />
         <Route path="/stores" element={<StoresPage />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/store/:sellerId" element={<StorePage />} />
 
         {/* Auth */}
@@ -118,8 +119,6 @@ export default function App() {
         <Route path="/admin/online" element={<PrivateRoute roles={['ADMIN']}><AdminOnlinePage /></PrivateRoute>} />
         <Route path="/admin/transactions" element={<PrivateRoute roles={['ADMIN']}><AdminTransactionsPage /></PrivateRoute>} />
         <Route path="/admin/pending-sellers" element={<PrivateRoute roles={['ADMIN']}><AdminPendingSellersPage /></PrivateRoute>} />
-        <Route path="/admin/disputes" element={<PrivateRoute roles={['ADMIN']}><AdminDisputesPage /></PrivateRoute>} />
-
         {/* Shared */}
         <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />

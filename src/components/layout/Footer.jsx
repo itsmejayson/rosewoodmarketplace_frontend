@@ -26,6 +26,13 @@ export default function Footer() {
             </ul>
           </div>
           <div>
+            <h4 className="font-semibold text-sm mb-3">Help</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/faq" className="hover:text-foreground">FAQ</Link></li>
+              <li><Link to="/stores" className="hover:text-foreground">Browse Stores</Link></li>
+            </ul>
+          </div>
+          <div>
             <h4 className="font-semibold text-sm mb-3">Account</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {!user && <li><Link to="/login" className="hover:text-foreground">Login</Link></li>}

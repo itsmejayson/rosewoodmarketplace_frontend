@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle, Clock, Truck, Package, XCircle, Bike, CreditCard, Store, MessageSquare, X, RotateCcw, RefreshCcw, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, Clock, Truck, Package, XCircle, Bike, CreditCard, Store, MessageSquare, X, RotateCcw, RefreshCcw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { orderAPI, cartAPI, refundAPI, disputeAPI } from '../../api';
+import { orderAPI, cartAPI, refundAPI } from '../../api';
 import { toast } from '../../components/ui/toast';
 import { formatCurrency, formatDate, ORDER_STATUS_COLORS, PAYMENT_STATUS_COLORS } from '../../lib/utils';
 import GcashPaymentPanel from '../../components/payment/GcashPaymentPanel';
@@ -41,11 +41,6 @@ export default function OrderDetailPage() {
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState('');
   const [submittingRefund, setSubmittingRefund] = useState(false);
-  // Dispute
-  const [showDisputeModal, setShowDisputeModal] = useState(false);
-  const [disputeReason, setDisputeReason] = useState('Wrong item');
-  const [disputeDescription, setDisputeDescription] = useState('');
-  const [submittingDispute, setSubmittingDispute] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -77,9 +72,7 @@ export default function OrderDetailPage() {
 
   const canReorder = ['DELIVERED', 'CANCELLED'].includes(order.status);
   const refund = order.refund;
-  const dispute = order.dispute;
   const canRequestRefund = order.status === 'DELIVERED' && !refund;
-  const canOpenDispute = ['DELIVERED', 'PAID'].includes(order.status) && !dispute;
 
   const handleReorder = async () => {
     setReordering(true);
@@ -113,22 +106,6 @@ export default function OrderDetailPage() {
       toast({ title: 'Error', description: err.response?.data?.message || 'Failed to request refund', variant: 'destructive' });
     } finally {
       setSubmittingRefund(false);
-    }
-  };
-
-  const submitDispute = async () => {
-    if (!disputeDescription.trim()) { toast({ title: 'Please describe the issue', variant: 'destructive' }); return; }
-    setSubmittingDispute(true);
-    try {
-      await disputeAPI.open(order.id, { reason: disputeReason, description: disputeDescription });
-      toast({ title: 'Dispute opened' });
-      setShowDisputeModal(false);
-      setDisputeDescription('');
-      fetchOrder();
-    } catch (err) {
-      toast({ title: 'Error', description: err.response?.data?.message || 'Failed to open dispute', variant: 'destructive' });
-    } finally {
-      setSubmittingDispute(false);
     }
   };
 
@@ -233,28 +210,38 @@ export default function OrderDetailPage() {
               Refund {refund.status}
             </span>
           )}
-          {canOpenDispute && (
-            <button
-              onClick={() => setShowDisputeModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-red-300 px-2.5 py-0.5 text-xs font-semibold text-red-700 hover:bg-red-50"
-            >
-              <AlertTriangle className="h-3 w-3" /> Open Dispute
-            </button>
-          )}
-          {dispute && (
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${dispute.status === 'RESOLVED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-              Dispute {dispute.status}
-            </span>
-          )}
         </div>
       </div>
 
-      {/* Refund status notes */}
-      {refund?.notes && (
-        <Card className="mb-6 border-orange-200 bg-orange-50">
-          <CardContent className="p-4 text-sm">
-            <p className="font-semibold text-orange-800">Refund {refund.status}</p>
-            <p className="text-orange-700 mt-0.5">Seller note: {refund.notes}</p>
+      {/* Refund details card */}
+      {refund && (
+        <Card className={`mb-6 ${refund.status === 'APPROVED' ? 'border-green-200 bg-green-50' : refund.status === 'REJECTED' ? 'border-red-200 bg-red-50' : 'border-orange-200 bg-orange-50'}`}>
+          <CardContent className="p-4 space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <p className={`font-semibold flex items-center gap-1.5 ${refund.status === 'APPROVED' ? 'text-green-800' : refund.status === 'REJECTED' ? 'text-red-800' : 'text-orange-800'}`}>
+                <RefreshCcw className="h-4 w-4" />
+                Refund Request — {refund.status}
+              </p>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${REFUND_BADGE[refund.status] || 'bg-gray-100 text-gray-800'}`}>
+                {refund.status}
+              </span>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">Your reason</p>
+              <p className="mt-0.5">{refund.reason}</p>
+            </div>
+            {refund.notes && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Seller's note</p>
+                <p className="mt-0.5">{refund.notes}</p>
+              </div>
+            )}
+            {refund.processedAt && (
+              <p className="text-xs text-muted-foreground">Processed on {formatDate(refund.processedAt)}</p>
+            )}
+            {!refund.processedAt && (
+              <p className="text-xs text-muted-foreground">Submitted on {formatDate(refund.createdAt)} · Awaiting seller review</p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -264,10 +251,10 @@ export default function OrderDetailPage() {
         <Card className="mb-6">
           <CardContent className="p-5">
             <div className="relative flex items-start justify-between">
-              <div className="absolute top-4 left-0 right-0 h-0.5 bg-muted mx-8" />
+              <div className="absolute top-4 left-8 right-8 h-0.5 bg-muted" />
               <div
-                className="absolute top-4 left-0 h-0.5 bg-rosewood-500 mx-8 transition-all"
-                style={{ width: `${(currentStep / (STATUS_STEPS.length - 1)) * 100}%` }}
+                className="absolute top-4 left-8 h-0.5 bg-rosewood-500 transition-all"
+                style={{ width: `calc(${currentStep / (STATUS_STEPS.length - 1)} * (100% - 4rem))` }}
               />
               {STATUS_STEPS.map((step, idx) => {
                 const Icon = STATUS_ICONS[step];
@@ -406,31 +393,57 @@ export default function OrderDetailPage() {
             </Card>
           )}
 
-          {/* Transaction log */}
-          {tx?.logs?.length > 0 && (
+          {/* Activity Log */}
+          {(tx?.logs?.length > 0 || refund) && (
             <Card>
               <CardHeader><CardTitle className="text-base">Activity Log</CardTitle></CardHeader>
               <CardContent>
                 <ul>
-                  {tx.logs.map((log, idx) => (
-                    <li key={log.id} className="flex gap-3 text-sm">
-                      <div className="flex flex-col items-center">
-                        <div className="w-2.5 h-2.5 rounded-full bg-rosewood-500 mt-1 flex-shrink-0" />
-                        {idx < tx.logs.length - 1 && (
-                          <div className="w-px flex-1 bg-border my-1" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0 pb-4">
-                        <p className="font-medium text-sm">
-                          {log.event ? log.event.replace(/_/g, ' ') : 'Event'}
-                        </p>
-                        {log.description && (
-                          <p className="text-sm text-muted-foreground mt-0.5">{log.description}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-0.5">{formatDate(log.createdAt)}</p>
-                      </div>
-                    </li>
-                  ))}
+                  {/* Transaction log entries */}
+                  {(tx?.logs || []).map((log, idx) => {
+                    const isLast = idx === (tx.logs.length - 1) && !refund;
+                    return (
+                      <li key={log.id} className="flex gap-3 text-sm">
+                        <div className="flex flex-col items-center">
+                          <div className="w-2.5 h-2.5 rounded-full bg-rosewood-500 mt-1 flex-shrink-0" />
+                          {!isLast && <div className="w-px flex-1 bg-border my-1" />}
+                        </div>
+                        <div className="flex-1 min-w-0 pb-4">
+                          <p className="font-medium text-sm">{log.event ? log.event.replace(/_/g, ' ') : 'Event'}</p>
+                          {log.description && <p className="text-sm text-muted-foreground mt-0.5">{log.description}</p>}
+                          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(log.createdAt)}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {/* Refund entries */}
+                  {refund && (
+                    <>
+                      <li className="flex gap-3 text-sm">
+                        <div className="flex flex-col items-center">
+                          <div className="w-2.5 h-2.5 rounded-full bg-orange-400 mt-1 flex-shrink-0" />
+                          {refund.processedAt && <div className="w-px flex-1 bg-border my-1" />}
+                        </div>
+                        <div className="flex-1 min-w-0 pb-4">
+                          <p className="font-medium text-sm">REFUND REQUESTED</p>
+                          <p className="text-sm text-muted-foreground mt-0.5">Reason: {refund.reason}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{formatDate(refund.createdAt)}</p>
+                        </div>
+                      </li>
+                      {refund.processedAt && (
+                        <li className="flex gap-3 text-sm">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${refund.status === 'APPROVED' ? 'bg-green-500' : 'bg-red-500'}`} />
+                          </div>
+                          <div className="flex-1 min-w-0 pb-4">
+                            <p className="font-medium text-sm">REFUND {refund.status}</p>
+                            {refund.notes && <p className="text-sm text-muted-foreground mt-0.5">Seller note: {refund.notes}</p>}
+                            <p className="text-xs text-muted-foreground mt-0.5">{formatDate(refund.processedAt)}</p>
+                          </div>
+                        </li>
+                      )}
+                    </>
+                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -463,48 +476,11 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {/* Dispute modal */}
-      {showDisputeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowDisputeModal(false)}>
-          <div className="bg-background rounded-xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <span className="font-semibold text-sm">Open a Dispute</span>
-              <button onClick={() => setShowDisputeModal(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
-            </div>
-            <div className="p-4 space-y-3">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Reason</label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  value={disputeReason}
-                  onChange={(e) => setDisputeReason(e.target.value)}
-                >
-                  {['Wrong item', 'Damaged', 'Not received', 'Other'].map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </div>
-              <textarea
-                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder="Describe the issue in detail…"
-                value={disputeDescription}
-                onChange={(e) => setDisputeDescription(e.target.value)}
-              />
-              <div className="flex gap-2">
-                <Button variant="destructive" onClick={submitDispute} disabled={submittingDispute}>
-                  {submittingDispute ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null} Submit Dispute
-                </Button>
-                <Button variant="ghost" onClick={() => setShowDisputeModal(false)}>Cancel</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Chat modal */}
       {showChat && tx && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50" onClick={() => setShowChat(false)}>
           <div
-            className="bg-background rounded-xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden"
-            style={{ maxHeight: '80vh' }}
+            className="bg-background rounded-xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden max-h-[80dvh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b">

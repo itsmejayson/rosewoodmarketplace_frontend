@@ -151,13 +151,6 @@ export const refundAPI = {
   seller: () => api.get('/refunds/seller'),
 };
 
-// ── Disputes ──────────────────────────────────────────────────────────────────
-export const disputeAPI = {
-  open: (orderId, data) => api.post(`/disputes/open/${orderId}`, data),
-  resolve: (orderId, data) => api.patch(`/disputes/${orderId}/resolve`, data),
-  admin: () => api.get('/disputes/admin'),
-  my: () => api.get('/disputes/my'),
-};
 
 // ── Store settings ────────────────────────────────────────────────────────────
 export const storeSettingsAPI = {

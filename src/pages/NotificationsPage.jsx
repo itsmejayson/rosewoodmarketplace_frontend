@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, ShoppingBag, CreditCard, AlertTriangle, ChevronRight, Clock } from 'lucide-react';
+import { Bell, CheckCheck, ShoppingBag, CreditCard, AlertTriangle, ChevronRight, Clock, RotateCcw } from 'lucide-react';
 import { Skeleton } from '../components/ui/skeleton';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -15,6 +15,9 @@ const TYPE_CONFIG = {
   PAYMENT_FAILED:       { color: 'bg-red-100 text-red-600',       Icon: CreditCard,    label: 'Payment' },
   PAYMENT_VERIFICATION: { color: 'bg-amber-100 text-amber-600',   Icon: CreditCard,    label: 'Verify Payment' },
   LOW_STOCK:            { color: 'bg-orange-100 text-orange-600', Icon: AlertTriangle, label: 'Stock Alert' },
+  REFUND_REQUESTED:     { color: 'bg-orange-100 text-orange-600', Icon: RotateCcw,     label: 'Refund' },
+  REFUND_APPROVED:      { color: 'bg-green-100 text-green-600',   Icon: RotateCcw,     label: 'Refund' },
+  REFUND_REJECTED:      { color: 'bg-red-100 text-red-600',       Icon: RotateCcw,     label: 'Refund' },
   SYSTEM:               { color: 'bg-gray-100 text-gray-600',     Icon: Bell,          label: 'System' },
 };
 
@@ -39,6 +42,13 @@ function getUrl(notification) {
       return data.orderId ? `/seller/orders/${data.orderId}` : null;
     case 'LOW_STOCK':
       return data.productId ? `/seller/products/${data.productId}/edit` : '/seller/products';
+    case 'REFUND_REQUESTED':
+      // Seller receives this — go to seller refunds page
+      return data.orderId ? `/seller/orders/${data.orderId}` : '/seller/refunds';
+    case 'REFUND_APPROVED':
+    case 'REFUND_REJECTED':
+      // Buyer receives these — go to their refunds page
+      return data.orderId ? `/orders/${data.orderId}` : '/refunds';
     case 'SYSTEM':
       if (notification.title === 'New Seller Registration') return '/admin/pending-sellers';
       if (notification.title === 'Account Approved!') return '/seller/dashboard';
