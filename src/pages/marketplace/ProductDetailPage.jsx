@@ -368,9 +368,19 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            <p className="text-sm text-muted-foreground mb-4">
-              Sold by <span className="font-medium text-foreground">{product.seller?.storeName || product.seller?.fullName}</span>
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">
+                Sold by <span className="font-medium text-foreground">{product.seller?.storeName || product.seller?.fullName}</span>
+              </p>
+              {product.seller?.id && (
+                <Link
+                  to={`/store/${product.seller.id}`}
+                  className="text-xs font-semibold text-rosewood-600 hover:text-rosewood-700 border border-rosewood-300 hover:border-rosewood-400 px-3 py-1 rounded-full transition-colors"
+                >
+                  Visit Store
+                </Link>
+              )}
+            </div>
 
             {user?.role === 'BUYER' && product.stockQty > 0 && (
               <Button
