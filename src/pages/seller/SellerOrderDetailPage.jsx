@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Bike, ClipboardCheck, Truck, Store, X, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Banknote, Smartphone, MessageSquare, Package, Ban, Truck, Store, X, RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { orderAPI, refundAPI } from '../../api';
@@ -20,10 +20,6 @@ export default function SellerOrderDetailPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-
-  // Confirm order state
-  const [deliveryFeeInput, setDeliveryFeeInput] = useState('');
-  const [showConfirmPanel, setShowConfirmPanel] = useState(false);
 
   // Refund state
   const [refundNotes, setRefundNotes] = useState('');
@@ -71,20 +67,6 @@ export default function SellerOrderDetailPage() {
   const nextStatus = NEXT_STATUS[order.status];
   const canCancelOrder = ['PENDING', 'AWAITING_PAYMENT'].includes(order.status);
 
-  const handleConfirmOrder = async () => {
-    const fee = deliveryFeeInput !== '' ? parseFloat(deliveryFeeInput) : undefined;
-    if (fee !== undefined && (isNaN(fee) || fee < 0)) {
-      toast({ title: 'Enter a valid delivery fee (0 for no fee)', variant: 'destructive' });
-      return;
-    }
-    await act(
-      () => orderAPI.confirmOrder(id, fee !== undefined ? { fee } : {}),
-      fee > 0 ? `Order confirmed with ₱${fee.toFixed(2)} delivery fee` : 'Order confirmed — buyer can now pay'
-    );
-    setShowConfirmPanel(false);
-    setDeliveryFeeInput('');
-  };
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
       <Link to="/seller/orders" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -120,60 +102,6 @@ export default function SellerOrderDetailPage() {
           )}
         </div>
       </div>
-
-      {/* ── PENDING: Confirm Order Banner — DELIVERY only ────────────────── */}
-      {order.status === 'PENDING' && order.fulfillmentType === 'DELIVERY' && (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-5">
-            <div className="flex items-start gap-3">
-              <ClipboardCheck className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-semibold text-amber-900">Review &amp; Confirm this Order</p>
-                <p className="text-sm text-amber-700 mt-0.5">
-                  The buyer is waiting. Optionally add a delivery fee, then confirm so they can proceed to payment.
-                </p>
-                {!showConfirmPanel ? (
-                  <Button className="mt-3 bg-amber-600 hover:bg-amber-700" onClick={() => setShowConfirmPanel(true)}>
-                    <ClipboardCheck className="h-4 w-4 mr-2" /> Confirm Order
-                  </Button>
-                ) : (
-                  <div className="mt-3 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Bike className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-medium text-amber-800">Delivery Fee (optional)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-muted-foreground">₱</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00 — leave blank if none"
-                        value={deliveryFeeInput}
-                        onChange={(e) => setDeliveryFeeInput(e.target.value)}
-                        className="flex-1 h-9 rounded-md border border-input px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring bg-white"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        className="bg-amber-600 hover:bg-amber-700"
-                        onClick={handleConfirmOrder}
-                        disabled={isActing}
-                      >
-                        {isActing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                        Confirm &amp; Notify Buyer
-                      </Button>
-                      <Button variant="ghost" onClick={() => { setShowConfirmPanel(false); setDeliveryFeeInput(''); }}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* ── AWAITING_PAYMENT ─────────────────────────────────────────────── */}
       {order.status === 'AWAITING_PAYMENT' && order.fulfillmentType === 'DELIVERY' && (

@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { toast } from '../../components/ui/toast';
-import { Loader2, Store, Save } from 'lucide-react';
+import { Loader2, Store, Save, Truck } from 'lucide-react';
 
 export default function StoreSettingsPage() {
   const { user, updateUser } = useAuthStore();
@@ -16,6 +16,7 @@ export default function StoreSettingsPage() {
     storeDescription: '',
     storeAddress: '',
     defaultDeliveryFee: 0,
+    freeDeliveryThreshold: '',
   });
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export default function StoreSettingsPage() {
       storeDescription: user?.storeDescription || '',
       storeAddress: user?.storeAddress || '',
       defaultDeliveryFee: user?.defaultDeliveryFee || 0,
+      freeDeliveryThreshold: user?.freeDeliveryThreshold || '',
     });
   }, [user]);
 
@@ -34,22 +36,25 @@ export default function StoreSettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const threshold = form.freeDeliveryThreshold === '' ? null : parseFloat(form.freeDeliveryThreshold);
+
       await storeSettingsAPI.update({
         storeDescription: form.storeDescription,
         storeAddress: form.storeAddress,
         defaultDeliveryFee: parseFloat(form.defaultDeliveryFee) || 0,
+        freeDeliveryThreshold: threshold,
       });
 
       if (form.storeName !== user?.storeName) {
         await userAPI.updateProfile({ storeName: form.storeName });
       }
 
-      // Update local auth store directly so the form stays populated
       updateUser({
         storeName: form.storeName,
         storeDescription: form.storeDescription,
         storeAddress: form.storeAddress,
         defaultDeliveryFee: parseFloat(form.defaultDeliveryFee) || 0,
+        freeDeliveryThreshold: threshold,
       });
 
       toast({ title: 'Store settings saved' });
@@ -103,19 +108,52 @@ export default function StoreSettingsPage() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="defaultDeliveryFee">Default Delivery Fee</Label>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">₱</span>
-              <Input
-                id="defaultDeliveryFee"
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={form.defaultDeliveryFee}
-                onChange={handleChange('defaultDeliveryFee')}
-              />
+          <div className="border-t pt-4 mt-2">
+            <p className="flex items-center gap-2 text-sm font-semibold mb-3">
+              <Truck className="h-4 w-4 text-rosewood-600" /> Delivery Settings
+            </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="defaultDeliveryFee">Default Delivery Fee</Label>
+                <p className="text-xs text-muted-foreground">Automatically added to every delivery order.</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">₱</span>
+                  <Input
+                    id="defaultDeliveryFee"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={form.defaultDeliveryFee}
+                    onChange={handleChange('defaultDeliveryFee')}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="freeDeliveryThreshold">Free Delivery Threshold (optional)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Orders at or above this amount get free delivery. Leave blank to never offer free delivery.
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">₱</span>
+                  <Input
+                    id="freeDeliveryThreshold"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="e.g. 500"
+                    value={form.freeDeliveryThreshold}
+                    onChange={handleChange('freeDeliveryThreshold')}
+                  />
+                </div>
+                {form.defaultDeliveryFee > 0 && form.freeDeliveryThreshold > 0 && (
+                  <p className="text-xs text-green-700 bg-green-50 rounded px-2 py-1">
+                    Orders ₱{parseFloat(form.freeDeliveryThreshold).toFixed(2)}+ get free delivery. Below that: ₱{parseFloat(form.defaultDeliveryFee).toFixed(2)} fee.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

@@ -9,7 +9,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import useCartStore from '../../store/cartStore';
-import { orderAPI, addressAPI } from '../../api';
+import { orderAPI, addressAPI, storeAPI } from '../../api';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
 
@@ -74,6 +74,7 @@ export default function CheckoutPage() {
 
   const isPickup = fulfillmentType === 'PICKUP';
   const [savedAddresses, setSavedAddresses] = useState([]);
+  const [sellerDelivery, setSellerDelivery] = useState({ defaultDeliveryFee: 0, freeDeliveryThreshold: null });
 
   useEffect(() => { fetchCart(); }, []);
   useEffect(() => {
@@ -81,6 +82,18 @@ export default function CheckoutPage() {
       .then(({ data }) => setSavedAddresses(data.data || []))
       .catch(() => {});
   }, []);
+  useEffect(() => {
+    if (!sellerId) return;
+    storeAPI.get(sellerId)
+      .then(({ data }) => {
+        const s = data.data?.seller;
+        setSellerDelivery({
+          defaultDeliveryFee: parseFloat(s?.defaultDeliveryFee || 0),
+          freeDeliveryThreshold: s?.freeDeliveryThreshold ? parseFloat(s.freeDeliveryThreshold) : null,
+        });
+      })
+      .catch(() => {});
+  }, [sellerId]);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(isPickup ? pickupSchema : deliverySchema),
@@ -107,12 +120,22 @@ export default function CheckoutPage() {
     || checkoutItems[0]?.product?.seller?.fullName
     || null;
 
-  const total = checkoutItems.reduce((sum, i) => {
+  const subtotal = checkoutItems.reduce((sum, i) => {
     const price = i.selectedOptions?.unitPrice != null
       ? parseFloat(i.selectedOptions.unitPrice)
       : parseFloat(i.product.price);
     return sum + price * i.quantity;
   }, 0);
+
+  // Compute delivery fee preview (mirrors backend logic)
+  const computedDeliveryFee = (() => {
+    if (isPickup) return 0;
+    const { defaultDeliveryFee, freeDeliveryThreshold } = sellerDelivery;
+    if (freeDeliveryThreshold !== null && subtotal >= freeDeliveryThreshold) return 0;
+    return defaultDeliveryFee;
+  })();
+  const isFreeDelivery = !isPickup && sellerDelivery.freeDeliveryThreshold !== null && subtotal >= sellerDelivery.freeDeliveryThreshold;
+  const total = subtotal + (isPickup ? 0 : computedDeliveryFee);
 
   const onSubmit = (data) => {
     if (!checkoutItems.length) {
@@ -227,15 +250,25 @@ export default function CheckoutPage() {
             </div>
 
             {/* Total */}
-            <div className="border-t pt-3 flex justify-between items-center">
-              <span className="font-semibold">Subtotal</span>
-              <span className="text-xl font-bold text-rosewood-600">{formatCurrency(total)}</span>
+            <div className="border-t pt-3 space-y-1.5">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Subtotal</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              {!isPickup && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Delivery fee</span>
+                  {isFreeDelivery
+                    ? <span className="text-green-600 font-medium">Free</span>
+                    : <span>{computedDeliveryFee > 0 ? formatCurrency(computedDeliveryFee) : '—'}</span>
+                  }
+                </div>
+              )}
+              <div className="flex justify-between items-center pt-1 border-t">
+                <span className="font-semibold">Total</span>
+                <span className="text-xl font-bold text-rosewood-600">{formatCurrency(total)}</span>
+              </div>
             </div>
-            {fulfillmentType === 'DELIVERY' && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" /> Delivery fee will be added by the seller after confirmation.
-              </p>
-            )}
           </div>
 
           <div className="p-4 border-t flex gap-3">
@@ -420,21 +453,39 @@ export default function CheckoutPage() {
                   ))}
                 </div>
                 <div className="border-t pt-3 space-y-2 text-sm">
-                  <div className="flex justify-between font-bold text-base">
+                  <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
+                    <span>{formatCurrency(subtotal)}</span>
+                  </div>
+                  {!isPickup && (
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Delivery fee</span>
+                      {isFreeDelivery ? (
+                        <span className="text-green-600 font-medium">Free</span>
+                      ) : computedDeliveryFee > 0 ? (
+                        <span>{formatCurrency(computedDeliveryFee)}</span>
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </div>
+                  )}
+                  {!isPickup && isFreeDelivery && (
+                    <p className="text-xs text-green-700 bg-green-50 rounded px-2 py-1">
+                      🎉 You qualify for free delivery!
+                    </p>
+                  )}
+                  <div className="flex justify-between font-bold text-base border-t pt-2">
+                    <span>Total</span>
                     <span className="text-rosewood-600">{formatCurrency(total)}</span>
                   </div>
-                  {fulfillmentType === 'DELIVERY' && (
-                    <p className="text-xs text-muted-foreground">+ Delivery fee (set by seller after order)</p>
-                  )}
                 </div>
 
                 <div className={`mt-4 rounded-lg p-3 text-xs ${isPickup ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'}`}>
                   {isPickup
                     ? <p>🏪 You'll be able to pay <strong>immediately</strong> after placing your order — no waiting required.</p>
                     : paymentMethod === 'GCASH'
-                      ? <p>📱 The seller will confirm your order and may add a delivery fee. Once confirmed, upload your GCash receipt to pay.</p>
-                      : <p>💵 The seller will confirm your order and may add a delivery fee. Pay cash upon delivery.</p>
+                      ? <p>📱 After placing your order, upload your GCash receipt to complete payment. You have <strong>5 minutes</strong> to submit.</p>
+                      : <p>💵 Your order will be processed for delivery. Pay cash upon delivery.</p>
                   }
                 </div>
 
