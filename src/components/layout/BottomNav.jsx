@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, ShoppingCart, ShoppingBag, LayoutDashboard, Package, User, Store } from 'lucide-react';
+import { Home, ShoppingCart, ShoppingBag, LayoutDashboard, Package, User, Store, Users } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
 import useSellerOrderStore from '../../store/sellerOrderStore';
@@ -79,6 +79,10 @@ export default function BottomNav() {
             <LayoutDashboard className="h-5 w-5" strokeWidth={isActive('/seller/dashboard') ? 2.5 : 1.8} />
             Dashboard
           </Link>
+          <Link to="/marketplace" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/marketplace') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <Home className="h-5 w-5" strokeWidth={isActive('/marketplace') ? 2.5 : 1.8} />
+            Shop
+          </Link>
           <Link to="/seller/orders" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium relative ${isActive('/seller/orders') ? 'text-rosewood-600' : 'text-gray-400'}`}>
             <div className="relative">
               <ShoppingBag className="h-5 w-5" strokeWidth={isActive('/seller/orders') ? 2.5 : 1.8} />
@@ -93,6 +97,35 @@ export default function BottomNav() {
           <Link to="/seller/products" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/seller/products') ? 'text-rosewood-600' : 'text-gray-400'}`}>
             <Package className="h-5 w-5" strokeWidth={isActive('/seller/products') ? 2.5 : 1.8} />
             Products
+          </Link>
+          <Link to="/profile" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/profile') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <User className="h-5 w-5" strokeWidth={isActive('/profile') ? 2.5 : 1.8} />
+            Me
+          </Link>
+        </div>
+      </nav>
+    );
+  }
+
+  if (user.role === 'ADMIN') {
+    return (
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 shadow-lg safe-area-pb">
+        <div className="flex">
+          <Link to="/admin" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/admin') && path === '/admin' ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <LayoutDashboard className="h-5 w-5" strokeWidth={isActive('/admin') && path === '/admin' ? 2.5 : 1.8} />
+            Dashboard
+          </Link>
+          <Link to="/marketplace" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/marketplace') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <Home className="h-5 w-5" strokeWidth={isActive('/marketplace') ? 2.5 : 1.8} />
+            Shop
+          </Link>
+          <Link to="/admin/users" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/admin/users') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <Users className="h-5 w-5" strokeWidth={isActive('/admin/users') ? 2.5 : 1.8} />
+            Users
+          </Link>
+          <Link to="/stores" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/stores') ? 'text-rosewood-600' : 'text-gray-400'}`}>
+            <Store className="h-5 w-5" strokeWidth={isActive('/stores') ? 2.5 : 1.8} />
+            Stores
           </Link>
           <Link to="/profile" className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 text-[10px] font-medium ${isActive('/profile') ? 'text-rosewood-600' : 'text-gray-400'}`}>
             <User className="h-5 w-5" strokeWidth={isActive('/profile') ? 2.5 : 1.8} />
