@@ -7,9 +7,11 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
 import { storeAPI } from '../api';
+import useAppConfigStore from '../store/appConfigStore';
 
 export default function StoresPage() {
   const navigate = useNavigate();
+  const appName = useAppConfigStore((s) => s.appName);
   const [stores, setStores] = useState([]);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function StoresPage() {
       </button>
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-1">Stores</h1>
-        <p className="text-muted-foreground">Browse all stores on RP Market</p>
+        <p className="text-muted-foreground">Browse all stores on {appName}</p>
       </div>
 
       <div className="relative mb-6 max-w-sm">

@@ -43,19 +43,19 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // Rose pink — from the rose flower in the Rosewood Place logo
+        // Rose pink — dynamically themed via --rw-h / --rw-s CSS variables
         rosewood: {
-          50:  '#FDF2F6',
-          100: '#FBDDE8',
-          200: '#F6BBD1',
-          300: '#EE8CB1',
-          400: '#E45D8F',
-          500: '#D84B7A',
-          600: '#C84B6E', // primary brand — logo rose
-          700: '#A63459',
-          800: '#8A2C4A',
-          900: '#6B2039',
-          950: '#3D1122',
+          50:  'hsl(var(--rw-h) var(--rw-s) 97%)',
+          100: 'hsl(var(--rw-h) var(--rw-s) 94%)',
+          200: 'hsl(var(--rw-h) var(--rw-s) 87%)',
+          300: 'hsl(var(--rw-h) var(--rw-s) 77%)',
+          400: 'hsl(var(--rw-h) var(--rw-s) 67%)',
+          500: 'hsl(var(--rw-h) var(--rw-s) 59%)',
+          600: 'hsl(var(--rw-h) var(--rw-s) 50%)',
+          700: 'hsl(var(--rw-h) var(--rw-s) 40%)',
+          800: 'hsl(var(--rw-h) var(--rw-s) 32%)',
+          900: 'hsl(var(--rw-h) var(--rw-s) 24%)',
+          950: 'hsl(var(--rw-h) var(--rw-s) 14%)',
         },
         // Warm dark brown — from the "Rosewood" script lettering
         wood: {

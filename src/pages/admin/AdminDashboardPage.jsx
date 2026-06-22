@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSocket } from '../../hooks/useSocket';
-import { Users, Store, ShoppingBag, Package, TrendingUp, Loader2, Wifi, CreditCard, Clock, Settings, Flag } from 'lucide-react';
+import { Users, Store, ShoppingBag, Package, TrendingUp, Loader2, Wifi, CreditCard, Clock, Settings, Flag, Tag, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { userAPI } from '../../api';
 import { formatCurrency, formatDate, ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../lib/utils';
@@ -142,12 +142,28 @@ export default function AdminDashboardPage() {
             subtitle="Products & cleanup"
           />
           <QuickCard
+            to="/admin/categories"
+            icon={Tag}
+            iconColor="text-teal-600"
+            iconBg="bg-teal-50"
+            title="Categories"
+            subtitle="Add, edit, remove"
+          />
+          <QuickCard
             to="/admin/settings"
             icon={Settings}
             iconColor="text-gray-600"
             iconBg="bg-gray-100"
             title="System Settings"
-            subtitle="AI assistant & more"
+            subtitle="Branding, color, AI"
+          />
+          <QuickCard
+            to="/admin/faqs"
+            icon={HelpCircle}
+            iconColor="text-indigo-600"
+            iconBg="bg-indigo-50"
+            title="FAQ"
+            subtitle="Add, edit, delete"
           />
           <QuickCard
             to="/admin/reports"

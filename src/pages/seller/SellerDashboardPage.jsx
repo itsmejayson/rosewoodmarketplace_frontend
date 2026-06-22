@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { DollarSign, ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Package, Loader2, RefreshCw, BarChart3 } from 'lucide-react';
+import { DollarSign, ShoppingBag, Clock, CheckCircle, XCircle, TrendingUp, Package, Loader2, RefreshCw, BarChart3, Settings, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { productAPI, transactionAPI } from '../../api';
@@ -270,6 +270,8 @@ export default function SellerDashboardPage() {
               { label: 'View Orders', href: '/seller/orders', icon: ShoppingBag },
               { label: 'Transactions', href: '/seller/transactions', icon: DollarSign },
               { label: 'Add Product', href: '/seller/products/new', icon: TrendingUp },
+              { label: 'Store Settings', href: '/seller/settings', icon: Settings },
+              { label: 'Reviews', href: '/seller/reviews', icon: Star },
             ].map(({ label, href, icon: Icon }) => (
               <Link key={href} to={href}>
                 <Card className="hover:border-rosewood-300 transition-colors cursor-pointer h-full">

@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import useAuthStore from '../../store/authStore';
+import useAppConfigStore from '../../store/appConfigStore';
 import { toast } from '../../components/ui/toast';
 import { useState, useRef } from 'react';
 
@@ -33,6 +34,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export default function RegisterPage() {
   const { register: registerUser, isLoading } = useAuthStore();
+  const appName = useAppConfigStore((s) => s.appName);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get('role') === 'SELLER' ? 'SELLER' : 'BUYER';
@@ -100,7 +102,7 @@ export default function RegisterPage() {
             </div>
           </div>
           <CardTitle className="text-2xl">Create account</CardTitle>
-          <CardDescription>Join RP Market today</CardDescription>
+          <CardDescription>Join {appName} today</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

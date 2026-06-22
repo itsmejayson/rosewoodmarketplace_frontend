@@ -5,6 +5,9 @@ import { reviewAPI } from '../../api';
 import { Card, CardContent } from '../../components/ui/card';
 import { formatDate } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
+import { Pagination, PaginationInfo } from '../../components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 
 const FILTERS = ['ALL', '5', '4', '3', '2', '1'];
 
@@ -26,6 +29,7 @@ export default function SellerReviewsPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     reviewAPI.seller()
@@ -35,6 +39,8 @@ export default function SellerReviewsPage() {
   }, []);
 
   const filtered = filter === 'ALL' ? reviews : reviews.filter((r) => String(r.rating) === filter);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const avgRating = reviews.length
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
@@ -76,10 +82,12 @@ export default function SellerReviewsPage() {
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {FILTERS.map((f) => {
           const count = f === 'ALL' ? reviews.length : reviews.filter((r) => String(r.rating) === f).length;
+          // reset page on filter change (handled via key)
+
           return (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => { setFilter(f); setPage(1); }}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 filter === f ? 'bg-rosewood-600 text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'
               }`}
@@ -99,8 +107,9 @@ export default function SellerReviewsPage() {
           </p>
         </div>
       ) : (
+        <>
         <div className="space-y-4">
-          {filtered.map((review) => {
+          {paginated.map((review) => {
             const product = review.product;
             const buyer = review.buyer;
             const img = product?.images?.[0]?.url;
@@ -146,6 +155,11 @@ export default function SellerReviewsPage() {
             );
           })}
         </div>
+        <div className="mt-4 space-y-2">
+          <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+          <PaginationInfo page={page} pageSize={PAGE_SIZE} total={filtered.length} />
+        </div>
+        </>
       )}
     </div>
   );

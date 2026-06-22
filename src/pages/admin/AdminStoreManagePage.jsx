@@ -10,6 +10,9 @@ import { Badge } from '../../components/ui/badge';
 import { adminAPI, userAPI } from '../../api';
 import { formatDate, formatCurrency } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
+import { Pagination, PaginationInfo } from '../../components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 
 // ── Sub-page: Products for a specific seller ───────────────────────────────────
 function SellerProductList({ seller, onBack }) {
@@ -19,6 +22,7 @@ function SellerProductList({ seller, onBack }) {
   const [deletingId, setDeletingId] = useState(null);
   const [confirmCleanup, setConfirmCleanup] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -63,6 +67,8 @@ function SellerProductList({ seller, onBack }) {
   };
 
   const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+  const productPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginatedProducts = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div>
@@ -97,7 +103,7 @@ function SellerProductList({ seller, onBack }) {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((p) => (
+          {paginatedProducts.map((p) => (
             <div key={p.id} className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3">
               {p.images?.[0]?.url
                 ? <img src={p.images[0].url} alt={p.name} className="h-12 w-12 rounded-lg object-cover flex-shrink-0" />
@@ -115,6 +121,10 @@ function SellerProductList({ seller, onBack }) {
               </button>
             </div>
           ))}
+          <div className="pt-2 space-y-2">
+            <Pagination page={page} totalPages={productPages} onPage={setPage} />
+            <PaginationInfo page={page} pageSize={PAGE_SIZE} total={filtered.length} />
+          </div>
         </div>
       )}
 
@@ -146,6 +156,7 @@ export default function AdminStoreManagePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
+  const [page, setPage] = useState(1);
 
   const loadSellers = async () => {
     setLoading(true);
@@ -175,6 +186,8 @@ export default function AdminStoreManagePage() {
     (s.storeName || s.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
     s.email.toLowerCase().includes(search.toLowerCase())
   );
+  const sellerPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginatedSellers = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -206,7 +219,7 @@ export default function AdminStoreManagePage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filtered.map((s) => (
+            {paginatedSellers.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSelected(s)}
@@ -230,6 +243,10 @@ export default function AdminStoreManagePage() {
                 <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
               </button>
             ))}
+            <div className="pt-2 space-y-2">
+              <Pagination page={page} totalPages={sellerPages} onPage={(p) => { setPage(p); }} />
+              <PaginationInfo page={page} pageSize={PAGE_SIZE} total={filtered.length} />
+            </div>
           </div>
         )}
       </div>

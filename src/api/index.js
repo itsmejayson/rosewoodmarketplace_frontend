@@ -170,10 +170,28 @@ export const adminAPI = {
   clearUserCart: (userId) => api.delete(`/admin/users/${userId}/cart`),
   listReports: (params) => api.get('/admin/reports', { params }),
   updateReport: (id, data) => api.patch(`/admin/reports/${id}`, data),
+  // Categories
+  listCategories: () => api.get('/admin/categories'),
+  createCategory: (data) => api.post('/admin/categories', data),
+  updateCategory: (id, data) => api.put(`/admin/categories/${id}`, data),
+  deleteCategory: (id) => api.delete(`/admin/categories/${id}`),
+  // Logo
+  uploadLogo: (formData) => api.post('/admin/settings/logo', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  removeLogo: () => api.delete('/admin/settings/logo'),
 };
 
 // ── Reports ───────────────────────────────────────────────────────────────────
 export const reportAPI = {
   submit: (formData) => api.post('/reports', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   my: () => api.get('/reports/my'),
+};
+
+// ── FAQs ──────────────────────────────────────────────────────────────────────
+export const faqAPI = {
+  list: () => api.get('/faqs'),
+  adminList: () => api.get('/faqs/admin'),
+  create: (data) => api.post('/faqs/admin', data),
+  update: (id, data) => api.put(`/faqs/admin/${id}`, data),
+  remove: (id) => api.delete(`/faqs/admin/${id}`),
+  seed: () => api.post('/faqs/admin/seed'),
 };

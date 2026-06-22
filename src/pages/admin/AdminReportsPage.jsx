@@ -8,6 +8,9 @@ import { Card, CardContent } from '../../components/ui/card';
 import { adminAPI } from '../../api';
 import { formatDate } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
+import { Pagination, PaginationInfo } from '../../components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 
 const STATUS_OPTIONS = ['ALL', 'OPEN', 'IN_PROGRESS', 'RESOLVED', 'DISMISSED'];
 
@@ -176,6 +179,7 @@ export default function AdminReportsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async (status = statusFilter) => {
     setLoading(true);
@@ -195,6 +199,7 @@ export default function AdminReportsPage() {
 
   const changeFilter = (s) => {
     setStatusFilter(s);
+    setPage(1);
     load(s);
   };
 
@@ -203,6 +208,8 @@ export default function AdminReportsPage() {
   };
 
   const openCount = reports.filter((r) => r.status === 'OPEN').length;
+  const totalPages = Math.max(1, Math.ceil(reports.length / PAGE_SIZE));
+  const paginated = reports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -252,9 +259,13 @@ export default function AdminReportsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {reports.map((r) => (
+            {paginated.map((r) => (
               <ReportCard key={r.id} report={r} onUpdate={handleUpdate} />
             ))}
+            <div className="pt-2 space-y-2">
+              <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+              <PaginationInfo page={page} pageSize={PAGE_SIZE} total={reports.length} />
+            </div>
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Store, ShoppingCart, BarChart2, Shield, Zap, Star, Salad, Wrench, Users, Wifi, CreditCard, UserCog, UserPlus } from 'lucide-react';
 import useAuthStore from '../store/authStore';
+import useAppConfigStore from '../store/appConfigStore';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import AdminCreateUserModal from './admin/AdminCreateUserModal';
@@ -17,6 +18,7 @@ const ADMIN_TOOLS = [
 
 export default function HomePage() {
   const { user } = useAuthStore();
+  const { appName, appTagline } = useAppConfigStore();
   const isAdmin = user?.role === 'ADMIN';
   const isSeller = user?.role === 'SELLER';
   const [showCreateUser, setShowCreateUser] = useState(false);
@@ -31,10 +33,9 @@ export default function HomePage() {
               <Store className="h-8 w-8" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">RP Market</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">{appName}</h1>
           <p className="text-xl text-rosewood-100 mb-8 max-w-2xl mx-auto">
-            Your trusted marketplace for fresh food products and quality construction materials.
-            Buy and sell with confidence.
+            {appTagline || 'Your trusted marketplace for fresh food products and quality construction materials.'}
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             {isAdmin ? (
@@ -73,7 +74,7 @@ export default function HomePage() {
       {/* Features */}
       <section className="py-16 bg-muted/40">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-10">Why RP Market?</h2>
+          <h2 className="text-3xl font-bold text-center mb-10">Why {appName}?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
@@ -193,7 +194,7 @@ export default function HomePage() {
                   <Users className="h-12 w-12 text-rosewood-600 mx-auto mb-4" />
                   <h2 className="text-3xl font-bold mb-4">Invite a Buyer</h2>
                   <p className="text-muted-foreground mb-6">
-                    Know someone who wants to shop at Rosewood Place? Have them create a buyer account and start ordering from your store.
+                    Know someone who wants to shop at {appName}? Have them create a buyer account and start ordering from your store.
                   </p>
                   <Link to="/register?role=BUYER">
                     <Button size="lg" className="bg-rosewood-600 hover:bg-rosewood-700">

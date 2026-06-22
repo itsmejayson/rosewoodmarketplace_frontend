@@ -6,11 +6,15 @@ import { formatCurrency } from '../../lib/utils';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { toast } from '../../components/ui/toast';
+import { Pagination, PaginationInfo } from '../../components/ui/Pagination';
+
+const PAGE_SIZE = 12;
 
 export default function FavoritesPage() {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let mounted = true;
@@ -84,6 +88,9 @@ export default function FavoritesPage() {
     );
   }
 
+  const totalPages = Math.max(1, Math.ceil(favorites.length / PAGE_SIZE));
+  const paginated = favorites.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <button
@@ -94,7 +101,7 @@ export default function FavoritesPage() {
       </button>
       <h1 className="text-2xl font-bold mb-6">My Favorites</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-        {favorites.map((fav) => {
+        {paginated.map((fav) => {
           const product = fav.product || fav;
           const imageUrl = product.images?.[0]?.url || '/placeholder-product.jpg';
 
@@ -137,6 +144,10 @@ export default function FavoritesPage() {
             </Card>
           );
         })}
+      </div>
+      <div className="mt-6 space-y-2">
+        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+        <PaginationInfo page={page} pageSize={PAGE_SIZE} total={favorites.length} />
       </div>
     </div>
   );

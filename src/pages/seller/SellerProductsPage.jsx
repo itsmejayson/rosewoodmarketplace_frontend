@@ -9,6 +9,7 @@ import { Input } from '../../components/ui/input';
 import { productAPI } from '../../api';
 import { formatCurrency } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 
 export default function SellerProductsPage() {
   const [products, setProducts] = useState([]);
@@ -18,6 +19,8 @@ export default function SellerProductsPage() {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkActing, setIsBulkActing] = useState(false);
+  const [confirmSingle, setConfirmSingle] = useState(null); // { id, name }
+  const [confirmBulk, setConfirmBulk] = useState(false);
 
   const fetchProducts = async (page = 1) => {
     setIsLoading(true);
@@ -56,8 +59,11 @@ export default function SellerProductsPage() {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  const handleDelete = (id, name) => setConfirmSingle({ id, name });
+
+  const confirmDeleteSingle = async () => {
+    const { id, name } = confirmSingle;
+    setConfirmSingle(null);
     setDeletingId(id);
     try {
       await productAPI.delete(id);
@@ -102,9 +108,11 @@ export default function SellerProductsPage() {
     });
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => setConfirmBulk(true);
+
+  const confirmBulkDelete = async () => {
+    setConfirmBulk(false);
     const ids = [...selectedIds];
-    if (!confirm(`Delete ${ids.length} selected product${ids.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
     setIsBulkActing(true);
     let ok = 0;
     for (const id of ids) {
@@ -126,6 +134,24 @@ export default function SellerProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <ConfirmDialog
+        open={!!confirmSingle}
+        title={`Delete "${confirmSingle?.name}"?`}
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDeleteSingle}
+        onCancel={() => setConfirmSingle(null)}
+      />
+      <ConfirmDialog
+        open={confirmBulk}
+        title={`Delete ${selectedIds.length} product${selectedIds.length === 1 ? '' : 's'}?`}
+        message="All selected products will be permanently removed. This cannot be undone."
+        confirmLabel="Delete All"
+        variant="danger"
+        onConfirm={confirmBulkDelete}
+        onCancel={() => setConfirmBulk(false)}
+      />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">My Products</h1>

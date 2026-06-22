@@ -1,10 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import MainLayout from './components/layout/MainLayout';
 import useAuthStore from './store/authStore';
 import useCartStore from './store/cartStore';
 import useNotificationStore from './store/notificationStore';
+import useAppConfigStore from './store/appConfigStore';
 import safeStorage from './lib/safeStorage';
+import ServerStartingPage from './pages/ServerStartingPage';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -42,6 +44,8 @@ import AdminPendingSellersPage from './pages/admin/AdminPendingSellersPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import AdminStoreManagePage from './pages/admin/AdminStoreManagePage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
+import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
+import AdminFaqPage from './pages/admin/AdminFaqPage';
 import ReportIssuePage from './pages/ReportIssuePage';
 import PendingApprovalPage from './pages/PendingApprovalPage';
 import FAQPage from './pages/FAQPage';
@@ -65,6 +69,26 @@ export default function App() {
   const { user, fetchMe } = useAuthStore();
   const { fetchCart } = useCartStore();
   const fetchNotifications = useNotificationStore((s) => s.fetch);
+  const fetchAppConfig = useAppConfigStore((s) => s.fetch);
+  const appName = useAppConfigStore((s) => s.appName);
+  const [serverStatus, setServerStatus] = useState('checking'); // 'checking' | 'online'
+
+  const handleServerReady = useCallback(() => {
+    setServerStatus('online');
+    fetchAppConfig();
+  }, [fetchAppConfig]);
+
+  useEffect(() => {
+    // Quick initial health check — if it fails, ServerStartingPage takes over polling
+    fetch('/health', { signal: AbortSignal.timeout(4000) })
+      .then((r) => { if (r.ok) handleServerReady(); else setServerStatus('starting'); })
+      .catch(() => setServerStatus('starting'));
+  }, []);
+
+  // Keep browser tab title in sync with app name
+  useEffect(() => {
+    document.title = `${appName} | Marketplace`;
+  }, [appName]);
 
   useEffect(() => {
     const token = safeStorage.getItem('accessToken');
@@ -77,6 +101,10 @@ export default function App() {
       fetchNotifications();
     }
   }, [user?.id]);
+
+  if (serverStatus !== 'online') {
+    return <ServerStartingPage onReady={handleServerReady} />;
+  }
 
   return (
     <Routes>
@@ -126,6 +154,8 @@ export default function App() {
         <Route path="/admin/settings" element={<PrivateRoute roles={['ADMIN']}><AdminSettingsPage /></PrivateRoute>} />
         <Route path="/admin/stores" element={<PrivateRoute roles={['ADMIN']}><AdminStoreManagePage /></PrivateRoute>} />
         <Route path="/admin/reports" element={<PrivateRoute roles={['ADMIN']}><AdminReportsPage /></PrivateRoute>} />
+        <Route path="/admin/categories" element={<PrivateRoute roles={['ADMIN']}><AdminCategoriesPage /></PrivateRoute>} />
+        <Route path="/admin/faqs" element={<PrivateRoute roles={['ADMIN']}><AdminFaqPage /></PrivateRoute>} />
         {/* Shared */}
         <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />

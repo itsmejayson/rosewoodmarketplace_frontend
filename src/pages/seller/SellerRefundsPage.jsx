@@ -6,6 +6,9 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { formatDate, formatCurrency } from '../../lib/utils';
 import { toast } from '../../components/ui/toast';
+import { Pagination, PaginationInfo } from '../../components/ui/Pagination';
+
+const PAGE_SIZE = 10;
 
 const STATUS_STYLES = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -20,6 +23,7 @@ export default function SellerRefundsPage() {
   const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  const [page, setPage] = useState(1);
   const [processing, setProcessing] = useState(null); // refund id being processed
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectNotes, setRejectNotes] = useState('');
@@ -71,6 +75,8 @@ export default function SellerRefundsPage() {
 
   const filtered = filter === 'ALL' ? refunds : refunds.filter((r) => r.status === filter);
   const pendingCount = refunds.filter((r) => r.status === 'PENDING').length;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   if (loading) {
     return (
@@ -105,7 +111,7 @@ export default function SellerRefundsPage() {
         {FILTERS.map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => { setFilter(f); setPage(1); }}
             className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
               filter === f
                 ? 'bg-rosewood-600 text-white'
@@ -123,8 +129,9 @@ export default function SellerRefundsPage() {
           <p className="text-muted-foreground">No {filter !== 'ALL' ? filter.toLowerCase() : ''} refund requests.</p>
         </div>
       ) : (
+        <>
         <div className="space-y-4">
-          {filtered.map((refund) => {
+          {paginated.map((refund) => {
             const order = refund.order;
             const buyer = order?.buyer;
             const isRejecting = rejectingId === refund.id;
@@ -239,6 +246,11 @@ export default function SellerRefundsPage() {
             );
           })}
         </div>
+        <div className="mt-4 space-y-2">
+          <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+          <PaginationInfo page={page} pageSize={PAGE_SIZE} total={filtered.length} />
+        </div>
+        </>
       )}
     </div>
   );

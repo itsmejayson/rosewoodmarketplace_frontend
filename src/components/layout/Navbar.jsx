@@ -5,22 +5,11 @@ import useAuthStore from '../../store/authStore';
 import useCartStore from '../../store/cartStore';
 import useNotificationStore from '../../store/notificationStore';
 import useSellerOrderStore from '../../store/sellerOrderStore';
+import useAppConfigStore from '../../store/appConfigStore';
 import { useState, useEffect } from 'react';
 import { getInitials } from '../../lib/utils';
 import { CheckCircle } from 'lucide-react';
-
-function RpLogo({ className = '' }) {
-  return (
-    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <ellipse cx="18" cy="13" rx="5" ry="7" fill="#C84B6E" opacity="0.9" transform="rotate(-20 18 13)" />
-      <ellipse cx="18" cy="13" rx="5" ry="7" fill="#C84B6E" opacity="0.75" transform="rotate(20 18 13)" />
-      <ellipse cx="18" cy="13" rx="4" ry="6" fill="#A33558" opacity="0.85" transform="rotate(0 18 13)" />
-      <circle cx="18" cy="13" r="3" fill="#8A2C4A" />
-      <path d="M18 19 Q17 25 16 28" stroke="#5C4133" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M17 23 Q13 20 12 17 Q15 17 17 23Z" fill="#78B832" />
-    </svg>
-  );
-}
+import RpLogo from '../RpLogo';
 
 function LogoutOverlay({ visible }) {
   return (
@@ -43,6 +32,8 @@ export default function Navbar() {
   const { cart } = useCartStore();
   const { unreadCount } = useNotificationStore();
   const { pendingCount, pendingRefundCount, fetchPendingCount } = useSellerOrderStore();
+  const appName = useAppConfigStore((s) => s.appName);
+  const logoUrl = useAppConfigStore((s) => s.logoUrl);
   const navigate = useNavigate();
   const location = useLocation();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -109,9 +100,12 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to={user?.role === 'SELLER' ? '/seller/dashboard' : user?.role === 'ADMIN' ? '/admin' : '/marketplace'} className="flex items-center gap-2 select-none flex-shrink-0">
-            <RpLogo className="h-8 w-8" />
+            {logoUrl
+              ? <img src={logoUrl} alt={appName} className="h-8 w-8 object-contain rounded" />
+              : <RpLogo className="h-8 w-8" />
+            }
             <span className="font-bold text-base text-rosewood-700" style={{ fontFamily: 'Georgia, serif' }}>
-              Rosewood
+              {appName}
             </span>
           </Link>
 
@@ -201,6 +195,9 @@ export default function Navbar() {
                       <>
                         <Link to="/addresses" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                           <MapPin className="h-4 w-4 text-gray-400" /> Saved Addresses
+                        </Link>
+                        <Link to="/refunds" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                          <RotateCcw className="h-4 w-4 text-gray-400" /> My Refunds
                         </Link>
                         <Link to="/transactions" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                           <CreditCard className="h-4 w-4 text-gray-400" /> Transactions

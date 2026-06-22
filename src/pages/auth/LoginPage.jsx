@@ -9,6 +9,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import useAuthStore from '../../store/authStore';
+import useAppConfigStore from '../../store/appConfigStore';
 import { toast } from '../../components/ui/toast';
 
 const schema = z.object({
@@ -18,6 +19,7 @@ const schema = z.object({
 
 export default function LoginPage() {
   const { login, isLoading } = useAuthStore();
+  const appName = useAppConfigStore((s) => s.appName);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,7 +49,7 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>Sign in to your RP Market account</CardDescription>
+          <CardDescription>Sign in to your {appName} account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/button';
 import { productAPI, favoriteAPI } from '../../api';
 import { formatCurrency } from '../../lib/utils';
 import useAuthStore from '../../store/authStore';
+import useAppConfigStore from '../../store/appConfigStore';
 import { toast } from '../../components/ui/toast';
 
 const SORT_OPTIONS = [
@@ -34,6 +35,7 @@ export default function MarketplacePage() {
   const searchRef = useRef(null);
 
   const { user } = useAuthStore();
+  const appName = useAppConfigStore((s) => s.appName);
   const navigate = useNavigate();
 
   const params = {
@@ -126,7 +128,7 @@ export default function MarketplacePage() {
     <div className="bg-gray-50 min-h-screen">
       {/* Hero search bar */}
       <div className="bg-rosewood-600 px-4 pt-5 pb-8">
-        <p className="text-rosewood-100 text-sm mb-1 font-medium">Rosewood Marketplace</p>
+        <p className="text-rosewood-100 text-sm mb-1 font-medium">{appName}</p>
         <h1 className="text-white text-2xl font-bold mb-4">What are you looking for?</h1>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -178,7 +180,7 @@ export default function MarketplacePage() {
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              {c.name}
+              {c.icon && <span className="mr-1">{c.icon}</span>}{c.name}
             </button>
           ))}
         </div>

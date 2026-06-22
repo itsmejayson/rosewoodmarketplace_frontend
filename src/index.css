@@ -14,8 +14,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 20 25% 15%;
 
+    /* Brand palette — hue + saturation driven by admin color picker */
+    --rw-h: 342;
+    --rw-s: 54%;
+
     /* Primary: rose pink from logo flower — #C84B6E ≈ HSL(342 54% 54%) */
-    --primary: 342 54% 54%;
+    --primary: 342 54% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 30 20% 94%;
@@ -43,7 +47,9 @@
     --card-foreground: 30 20% 95%;
     --popover: 20 25% 10%;
     --popover-foreground: 30 20% 95%;
-    --primary: 342 54% 60%;
+    --rw-h: 342;
+    --rw-s: 54%;
+    --primary: 342 54% 50%;
     --primary-foreground: 0 0% 100%;
     --secondary: 20 20% 16%;
     --secondary-foreground: 30 20% 90%;
