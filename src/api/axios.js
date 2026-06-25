@@ -11,6 +11,10 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = safeStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Let axios set Content-Type automatically for FormData (includes multipart boundary)
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 

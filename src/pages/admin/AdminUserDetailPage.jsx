@@ -64,34 +64,36 @@ export default function AdminUserDetailPage() {
 
       {/* Header card */}
       <Card>
-        <CardContent className="p-6 flex flex-wrap items-center gap-5">
-          <div className="h-20 w-20 rounded-full bg-rosewood-100 flex items-center justify-center text-rosewood-700 text-2xl font-bold flex-shrink-0 overflow-hidden">
-            {user.profileImage
-              ? <img src={user.profileImage} alt={user.fullName} className="w-full h-full object-cover" />
-              : getInitials(user.fullName)
-            }
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold">{user.fullName}</h1>
-            <p className="text-muted-foreground text-sm">{user.email}</p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                user.role === 'SELLER' ? 'bg-rosewood-100 text-rosewood-700' :
-                user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
-                'bg-green-100 text-green-700'
-              }`}>{user.role}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                {user.isActive ? 'Active' : 'Inactive'}
-              </span>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="h-20 w-20 rounded-full bg-rosewood-100 flex items-center justify-center text-rosewood-700 text-2xl font-bold flex-shrink-0 overflow-hidden">
+              {user.profileImage
+                ? <img src={user.profileImage} alt={user.fullName} className="w-full h-full object-cover" />
+                : getInitials(user.fullName)
+              }
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold">{user.fullName}</h1>
+              <p className="text-muted-foreground text-sm truncate">{user.email}</p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  user.role === 'SELLER' ? 'bg-rosewood-100 text-rosewood-700' :
+                  user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                  'bg-green-100 text-green-700'
+                }`}>{user.role}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                  {user.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setShowEditModal(true)}>
+            <Button variant="outline" className="flex-1" onClick={() => setShowEditModal(true)}>
               <Pencil className="h-4 w-4 mr-2" /> Edit
             </Button>
             <Button
               variant="outline"
-              className={user.isActive ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'}
+              className={`flex-1 ${user.isActive ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'}`}
               onClick={handleToggle}
               disabled={isToggling}
             >
@@ -105,7 +107,7 @@ export default function AdminUserDetailPage() {
             </Button>
             <Button
               variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50"
+              className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
               onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2 className="h-4 w-4 mr-2" /> Delete
