@@ -31,11 +31,13 @@ export default function ServerStartingPage({ onReady }) {
     }, 10000);
 
     // Poll the health endpoint
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const healthUrl = apiBase.replace(/\/api$/, '') + '/health';
     let attempts = 0;
     const poll = setInterval(async () => {
       attempts++;
       try {
-        const res = await fetch('/health', { signal: AbortSignal.timeout(4000) });
+        const res = await fetch(healthUrl, { signal: AbortSignal.timeout(4000) });
         if (res.ok) {
           clearInterval(poll);
           clearInterval(tick);

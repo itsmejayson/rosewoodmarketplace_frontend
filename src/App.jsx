@@ -80,7 +80,9 @@ export default function App() {
 
   useEffect(() => {
     // Quick initial health check — if it fails, ServerStartingPage takes over polling
-    fetch('/health', { signal: AbortSignal.timeout(4000) })
+    const apiBase = import.meta.env.VITE_API_URL || '/api';
+    const healthUrl = apiBase.replace(/\/api$/, '') + '/health';
+    fetch(healthUrl, { signal: AbortSignal.timeout(4000) })
       .then((r) => { if (r.ok) handleServerReady(); else setServerStatus('starting'); })
       .catch(() => setServerStatus('starting'));
   }, []);
